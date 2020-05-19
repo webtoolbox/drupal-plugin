@@ -11,7 +11,7 @@ DEFINE(COOKIE_DOMAIN, $base_url);
 function websitetoolbox_page_alter(&$page)
 {  
   $page['#post_render'][] = 'websitetoolbox_callback';
-}
+} 
 function websitetoolbox_callback(&$data, $elements) {
   $forum_url = variable_get('websitetoolbox_url'); 
   if(!user_is_logged_in() && isset($_COOKIE['wt_logout_token'])) {
