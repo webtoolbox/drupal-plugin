@@ -11,5 +11,5 @@ package = tools
 version = 7.x-1.0-dev
 
 //dependencies[] = ctools
-//files[] = websitetoolbox.install
+
 configure = admin/config/setting/websitetoolbox Forum
