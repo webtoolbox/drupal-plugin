@@ -36,7 +36,7 @@ function websitetoolbox_callback(&$data, $elements) {
 /*append forum link with authtoken after user logged in Case embedded disbale*/
  if(user_is_logged_in() && $chkIfEmbedded != 1 ){    
    function websitetoolbox_url_outbound_alter(&$path, &$options, $original_path) {
-      if($options['title'] == 'Forum'){
+     if($options['title'] == 'Forum'){
           if(isset($_COOKIE['wt_logout_token'])) {
               $cookie = $_COOKIE['wt_logout_token'];
            }
@@ -72,15 +72,11 @@ function websitetoolbox_node_view_alter(&$page) {
     $embedURL = $wtb_embed_url.'/js/mb/embed.js';
     $newURL =  $wtb_embed_url.'/js/mb/embed.js'.$auth_token;
     $content_changed = str_replace($embedURL,$newURL,$content);    
-    $page['body'][0]['#markup'] = $content_changed;    
-     
+    $page['body'][0]['#markup'] = $content_changed;       
  }
 /*render page if forum embedded enabled with authtoken append in forum embedded link*/
-
- 
  
 /** * Implements hook_menu for backend settings page().Create "configuration link for custom module" in administartor */
-
 function websitetoolbox_menu() {
     $items = array();
     $items['admin/config/content/websitetoolbox'] = array(
@@ -92,7 +88,6 @@ function websitetoolbox_menu() {
         'type' => MENU_NORMAL_ITEM, );
     return $items;
 }
-
 /** * Implements hook_menu for backend settings page(). */
 
 /** * Implements hook_permission(). Implements hook_menu for backend settings page().Create "permission link for custom module in administartor" */
@@ -103,11 +98,11 @@ function websitetoolbox_permission() {
     'restrict access' => true)
   );
 }
+
  /*create module admin configuration form*/
 function websitetoolbox_admin() {
     $form = array();
-    $html = '<h2>Forums by Website Toolbox</h2><br />
-    <b>Please log in to your Website Toolbox account.</b><p>Not a Website Toolbox Forum owner? <a href="https://www.websitetoolbox.com/wordpress" target="_blank">Create a Forum Now!</a></p><p>Please <a href="https://www.websitetoolbox.com/contact?subject=WordPress+Plugin+Setup+Help" target="_blank">Contact Customer Support</a> if you need help getting set up.</p>';
+    $html = '<h2>Forums by Website Toolbox</h2><br /><b>Please log in to your Website Toolbox account.</b><p>Not a Website Toolbox Forum owner? <a href="https://www.websitetoolbox.com/wordpress" target="_blank">Create a Forum Now!</a></p><p>Please <a href="https://www.websitetoolbox.com/contact?subject=WordPress+Plugin+Setup+Help" target="_blank">Contact Customer Support</a> if you need help getting set up.</p>';
     $form['display_html'][] = array('#type'=> 'markup','#markup'=> $html,);
     if((variable_get('websitetoolbox_forum_username') == '') || $_GET['websitetoolboxoption'] == 1){
         $form['websitetoolbox_forum_username'] = array(
@@ -127,28 +122,25 @@ function websitetoolbox_admin() {
           '#maxlength' => 250,
           '#description' => t("Website ToolBox Password"),
           '#required' => TRUE,
-        );
-        
-  }else{
-        $html1 = "<div><b>Website ToolBox Username :  </b>".variable_get('websitetoolbox_forum_username')."&nbsp;&nbsp;&nbsp;     <a href='?websitetoolboxoption=1'>Change</a></div>";
-        $form['display_html'][] = array('#type'=> 'markup','#markup'=> $html1,);
-        $html2 = '<br /><div>Enable this option to have your forum embedded in a page of your website.Disable this option to have your forum load in a full-sized window. You can use the Layout section in your Website Toolbox account to <a href="https://www.websitetoolbox.com/support/making-your-forum-layout-match-your-website-148" target="_blank">customize your forum layout to match your website</a> or <a href="https://www.websitetoolbox.com/contact?subject=Customize+Forum+Layout" target="_blank">contact Website Toolbox support to customize it for you</a></div><br />';
-        $form['display_html'][] = array(
-          '#type' => 'markup','#markup'=> $html2,);
+        );        
+    }else{
+       $html1 = "<div><b>Website ToolBox Username :  </b>".variable_get('websitetoolbox_forum_username')."&nbsp;&nbsp;&nbsp;     <a href='?q=".$_GET[q]."&websitetoolboxoption=1'>Change</a></div>";
+       $form['display_html'][] = array('#type' => 'markup','#markup'=> $html1,);
+       $html2 = '<br /><div>Enable this option to have your forum embedded in a page of your website.Disable this option to have your forum load in a full-sized window. You can use the Layout section in your Website Toolbox account to <a href="https://www.websitetoolbox.com/support/making-your-forum-layout-match-your-website-148" target="_blank">customize your forum layout to match your website</a> or <a href="https://www.websitetoolbox.com/contact?subject=Customize+Forum+Layout" target="_blank">contact Website Toolbox support to customize it for you</a></div><br />';
+         $form['display_html'][] = array('#type'=> 'markup','#markup'=> $html2,);
+       $form['websitetoolbox_forum_embedded'] = array(
+          '#type' => 'checkbox',
+          '#title' => t('Embedded'),
+          '#default_value' => variable_get('websitetoolbox_forum_embedded', 1),
+          '#size' => 60,
+          '#maxlength' => 250,    
+          '#required' => FALSE,
+        );  
     }
-    $form['websitetoolbox_forum_embedded'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Embedded'),
-      '#default_value' => variable_get('websitetoolbox_forum_embedded', 1),
-      '#size' => 60,
-      '#maxlength' => 250,    
-      '#required' => FALSE,
-    );   
     $form['#submit'][] = 'websitetoolbox_admin_submit';     
     return system_settings_form($form);
 } 
  /*create module admin configuration form*/
-
 /*submit username and password for forum configuation */
 function websitetoolbox_admin_submit($form_id, &$form_state){  
     if($_REQUEST['websitetoolbox_forum_username'] != ''){
@@ -160,7 +152,8 @@ function websitetoolbox_admin_submit($form_id, &$form_state){
          $websitetoolbox_forum_password = $_REQUEST['websitetoolbox_forum_password'];
     }else{
          $websitetoolbox_forum_password = variable_get('websitetoolbox_forum_password');
-    }   
+    }
+   
     $websitetoolbox_forum_embedded = $_REQUEST['websitetoolbox_forum_embedded'];
     if($websitetoolbox_forum_embedded == 1){
           $websitetoolbox_forum_embedded = 1;
@@ -170,8 +163,6 @@ function websitetoolbox_admin_submit($form_id, &$form_state){
     websitetoolbox_plugin_chk($websitetoolbox_forum_username,$websitetoolbox_forum_password,$websitetoolbox_forum_embedded);
 }
 /*submit username and password for forum configuation */
-
-
 /*get authtoken, save authtoken, create cookies after user logged in*/
 function websitetoolbox_user_login (&$edit, $account) {
     global $user;
@@ -194,7 +185,6 @@ function save_authToken($authtoken,$access_token,$chatroom_url,$wtbUserid){
     }
 }
 /*Save authtoken in session*/
-
 function websitetoolbox_authtoken ($user,$type) {
   if($type == 'login'){
         global $user;
@@ -223,11 +213,9 @@ function websitetoolbox_authtoken ($user,$type) {
     if(isset($pass) && $pass != "") {
         $data['pw'] = $pass;
     }
-    $result = drupal_http_request($URL, $options);
-    
+    $result = drupal_http_request($URL, $options);    
     //Check if http/https request could not return any error then filter JSON from response
-    if($result) {
-         
+    if($result) {         
         $response = json_decode($result->data);
         if($response && $response->{'authtoken'} != "") {
             $authtoken = $response->{'authtoken'};
@@ -386,6 +374,7 @@ function createMenuUrl($response){
       'module' => 'menu',
     );
     menu_link_save($item);
+    cache_clear_all('*', 'cache_menu', TRUE);
   } 
 }
 /*check if forumdata already exist*/
@@ -440,6 +429,7 @@ function createEmbeddedForum($response,$websitetoolbox_forum_embedded){
               'module' => 'menu',
           );
           menu_link_save($item);
+          cache_clear_all('*', 'cache_menu', TRUE);
       }                   
     db_insert('url_alias')->fields(array('source' => 'node/'.$node_id,'alias'=>'Forum','language'=>'und',))->execute();    
     }else{ 
@@ -500,8 +490,7 @@ function websitetoolbox_user_delete($account) {
         'timeout' => 15,
     );
     $result = drupal_http_request($URL, $options);
-}
- 
+} 
 function setCookieOnLogin($responseArray, $rememberme) { 
     $persistent = 0;
     if($rememberme != "") {
@@ -525,15 +514,12 @@ function checkSession(){
          drupal_session_start();
     } 
 }
-
 function setWtbCookies($cname, $cvalue, $persistent) {
   if($persistent == 1) {
     $expiration = (int) time() + (86400 * 365);
   } else {
     $expiration = 0;
   }
- 
-
   setcookie($cname, $cvalue, $wtbBaseCookieOptions);
   // Pass param in setcookie function as a array if php version is 7.3 or above, to overcome the waring return on wordpress website.
   if(PHP_VERSION_ID < 70300) {
@@ -636,7 +622,6 @@ function apiRequest($method, $path, $data) {
   curl_close($curl);
   return json_decode($response);
 }
-
 /* Purpose: remove paramete and it's value from the URL.
 Parameter: URL, parameter name
 Return: Updated URL */
