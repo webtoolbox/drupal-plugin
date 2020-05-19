@@ -2,33 +2,32 @@
 global $base_url;
 global $base_path;  
 
-DEFINE(MY_URL, 'https://beta.websitetoolbox.com/tool/members/mb/settings');
-DEFINE(API_URL, 'https://api.websitetoolbox.com/dev/api');
+DEFINE(MY_URL, 'https://www.websitetoolbox.com/tool/members/mb/settings');
+DEFINE(API_URL, 'https://api.websitetoolbox.com/v1/api');
 DEFINE(COOKIEPATH, $base_path);
 DEFINE(COOKIE_DOMAIN, $base_url);
 
-/* Print image on page render after logout*/
+/* Print image tag on page render after logout and clear cookie and session*/
 function websitetoolbox_page_alter(&$page)
 {  
     $page['#post_render'][] = 'websitetoolbox_callback';
 }
-function websitetoolbox_callback(&$children, $elements) {
-   $forum_url = variable_get('websitetoolbox_url'); 
-   if(!user_is_logged_in() && isset($_COOKIE['wt_logout_token'])) {
+function websitetoolbox_callback(&$data, $elements) {
+    $forum_url = variable_get('websitetoolbox_url'); 
+    if(!user_is_logged_in() && isset($_COOKIE['wt_logout_token'])) {
         $logout_auth_url = $forum_url."/register/logout?authtoken=".$_COOKIE['wt_logout_token'];
         $logout_auth_url = preg_replace('#^https?:#i', '', $logout_auth_url);
         $img = '<img src="'.$logout_auth_url.'" border="0" width="0" height="0" alt="">';     
-        $children = preg_replace('@</body[^>]*>@', '$0' . $img, $children, 1);
-     
-    unsetLoginSession();
-    resetCookieOnLogout(); 
-   }else{
-    $img = '';
-    $children = preg_replace('@<body[^>]*>@', '$0' . $img, $children, 1);
-  }
-  return $children;
+        $data = preg_replace('@</body[^>]*>@', '$0' . $img, $data, 1);
+        unsetLoginSession();
+        resetCookieOnLogout(); 
+    }else{
+        $img = '';
+        $data = preg_replace('@<body[^>]*>@', '$0' . $img, $data, 1);
+    }
+    return $data;
 }
-/* Print image on page render after logout*/
+/* Print image tag on page render after logout and clear cookie and session*/
 
 /*check if embedded is enable/disable in configuration*/
  $chkIfEmbedded = variable_get('websitetoolbox_forum_embedded');
@@ -67,9 +66,6 @@ function websitetoolbox_node_view_alter(&$page) {
       $auth_token = "?authtoken=".$_COOKIE['wt_logout_token'];
     }
 
-    if(isset($_COOKIE['wtchat_logout_token'])) {
-        $auth_token .= "-".$_COOKIE['wtchat_logout_token'];
-    }
     if(isset($_COOKIE['wt_logout_token']) && isset($_COOKIE['wt_login_remember'])) {
         $auth_token .= "&remember=".$_COOKIE['wt_login_remember'];
     }
@@ -83,24 +79,23 @@ function websitetoolbox_node_view_alter(&$page) {
 
  
  
-/** * Implements hook_menu for backend settings page(). */
+/** * Implements hook_menu for backend settings page().Create "configuration link for custom module" in administartor */
 
 function websitetoolbox_menu() {
     $items = array();
     $items['admin/config/content/websitetoolbox'] = array(
-        'title' => t('Configuration of websitetoolbox'),
+        'title' => t('Configuration of websitetoolbox Forum'),
         'description' => t('Configure the websitetoolbox module'),
         'page callback' => 'drupal_get_form',
         'page arguments' => array('websitetoolbox_admin'),
         'access arguments' => array('administer websitetoolbox settings'),
         'type' => MENU_NORMAL_ITEM, );
-     return $items;
+    return $items;
 }
 
 /** * Implements hook_menu for backend settings page(). */
 
-/** * Implements hook_permission(). */
-
+/** * Implements hook_permission(). Implements hook_menu for backend settings page().Create "permission link for custom module in administartor" */
 function websitetoolbox_permission() {
   return array(
     'administer websitetoolbox settings' => array(
@@ -108,28 +103,39 @@ function websitetoolbox_permission() {
     'restrict access' => true)
   );
 }
-
  /*create module admin configuration form*/
 function websitetoolbox_admin() {
     $form = array();
-    $form['websitetoolbox_forum_username'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Website ToolBox Username'),
-      '#default_value' => variable_get('websitetoolbox_forum_username', ""),
-      '#size' => 60,
-      '#maxlength' => 250,
-      '#description' => t("Website ToolBox Username"),
-      '#required' => TRUE,
-    );
-    $form['websitetoolbox_forum_password'] = array(
-      '#type' => 'password',
-      '#title' => t('Website ToolBox Password'),
-      '#default_value' => variable_get('websitetoolbox_forum_password', ""),
-      '#size' => 60,
-      '#maxlength' => 250,
-      '#description' => t("Website ToolBox Password"),
-      '#required' => TRUE,
-    );
+    $html = '<h2>Forums by Website Toolbox</h2><br />
+    <b>Please log in to your Website Toolbox account.</b><p>Not a Website Toolbox Forum owner? <a href="https://www.websitetoolbox.com/wordpress" target="_blank">Create a Forum Now!</a></p><p>Please <a href="https://www.websitetoolbox.com/contact?subject=WordPress+Plugin+Setup+Help" target="_blank">Contact Customer Support</a> if you need help getting set up.</p>';
+    $form['display_html'][] = array('#type'=> 'markup','#markup'=> $html,);
+    if((variable_get('websitetoolbox_forum_username') == '') || $_GET['websitetoolboxoption'] == 1){
+        $form['websitetoolbox_forum_username'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Website ToolBox Username'),
+          '#default_value' => variable_get('websitetoolbox_forum_username', ""),
+          '#size' => 60,
+          '#maxlength' => 250,
+          '#description' => t("Website ToolBox Username"),
+          '#required' => TRUE,
+        );
+        $form['websitetoolbox_forum_password'] = array(
+          '#type' => 'password',
+          '#title' => t('Website ToolBox Password'),
+          '#default_value' => variable_get('websitetoolbox_forum_password', ""),
+          '#size' => 60,
+          '#maxlength' => 250,
+          '#description' => t("Website ToolBox Password"),
+          '#required' => TRUE,
+        );
+        
+  }else{
+        $html1 = "<div><b>Website ToolBox Username :  </b>".variable_get('websitetoolbox_forum_username')."&nbsp;&nbsp;&nbsp;     <a href='?websitetoolboxoption=1'>Change</a></div>";
+        $form['display_html'][] = array('#type'=> 'markup','#markup'=> $html1,);
+        $html2 = '<br /><div>Enable this option to have your forum embedded in a page of your website.Disable this option to have your forum load in a full-sized window. You can use the Layout section in your Website Toolbox account to <a href="https://www.websitetoolbox.com/support/making-your-forum-layout-match-your-website-148" target="_blank">customize your forum layout to match your website</a> or <a href="https://www.websitetoolbox.com/contact?subject=Customize+Forum+Layout" target="_blank">contact Website Toolbox support to customize it for you</a></div><br />';
+        $form['display_html'][] = array(
+          '#type' => 'markup','#markup'=> $html2,);
+    }
     $form['websitetoolbox_forum_embedded'] = array(
       '#type' => 'checkbox',
       '#title' => t('Embedded'),
@@ -137,16 +143,24 @@ function websitetoolbox_admin() {
       '#size' => 60,
       '#maxlength' => 250,    
       '#required' => FALSE,
-    );
+    );   
     $form['#submit'][] = 'websitetoolbox_admin_submit';     
     return system_settings_form($form);
-}
+} 
  /*create module admin configuration form*/
 
 /*submit username and password for forum configuation */
-function websitetoolbox_admin_submit($form_id, &$form_state){    
-    $websitetoolbox_forum_username = $_REQUEST['websitetoolbox_forum_username'];
-    $websitetoolbox_forum_password = $_REQUEST['websitetoolbox_forum_password'];
+function websitetoolbox_admin_submit($form_id, &$form_state){  
+    if($_REQUEST['websitetoolbox_forum_username'] != ''){
+        $websitetoolbox_forum_username = $_REQUEST['websitetoolbox_forum_username'];
+    }else{
+         $websitetoolbox_forum_username = variable_get('websitetoolbox_forum_username');
+    }
+    if($_REQUEST['websitetoolbox_forum_password'] != ''){
+         $websitetoolbox_forum_password = $_REQUEST['websitetoolbox_forum_password'];
+    }else{
+         $websitetoolbox_forum_password = variable_get('websitetoolbox_forum_password');
+    }   
     $websitetoolbox_forum_embedded = $_REQUEST['websitetoolbox_forum_embedded'];
     if($websitetoolbox_forum_embedded == 1){
           $websitetoolbox_forum_embedded = 1;
@@ -187,12 +201,10 @@ function websitetoolbox_authtoken ($user,$type) {
   }
  $forum_api = variable_get('websitetoolbox_api'); 
  $forum_url = variable_get('websitetoolbox_url'); 
-  if($forum_api) {
+ if($forum_api) {
     $username = $user->name;
     $email = $user->mail;
     $URL = $forum_url."/register/setauthtoken";
-
-
     $data = array(
       'type' =>'json',
       'apikey' => $forum_api, 
@@ -213,42 +225,38 @@ function websitetoolbox_authtoken ($user,$type) {
     }
     $result = drupal_http_request($URL, $options);
     
-      //Check if http/https request could not return any error then filter JSON from response
-      if($result) {
-           
-          $response = json_decode($result->data);
-          if($response && $response->{'authtoken'} != "") {
-              $authtoken = $response->{'authtoken'};
-              $access_token = '';
-              $chatroom_url = '';
-              // Check if "-" exist in the authtoken then first part is authtoken (login on the forum) second part is access token login on Chat Room.
-              if( strpos( $authtoken, "-" ) !== false ) {
-                  $tokens = explode("-",$authtoken);
-                  $authtoken = $tokens[0];
-                  $access_token = $tokens[1];
-                  $chatroom_url = $response->{'chatroom_url'};
-              }
-              $wtbUserid = $response->{'userid'};
-              $responseArray = array(
-                  'authtoken' => $authtoken,
-                  'access_token' => $access_token,
-                  'chatroom_url' => $chatroom_url,
-                  'wtbUserid' => $wtbUserid
-              );
-              return $responseArray;
-          }
-      }
-    }             
+    //Check if http/https request could not return any error then filter JSON from response
+    if($result) {
          
+        $response = json_decode($result->data);
+        if($response && $response->{'authtoken'} != "") {
+            $authtoken = $response->{'authtoken'};
+            $access_token = '';
+            $chatroom_url = '';
+            // Check if "-" exist in the authtoken then first part is authtoken (login on the forum) second part is access token login on Chat Room.
+            if( strpos( $authtoken, "-" ) !== false ) {
+                $tokens = explode("-",$authtoken);
+                $authtoken = $tokens[0];
+                $access_token = $tokens[1];
+                $chatroom_url = $response->{'chatroom_url'};
+            }
+            $wtbUserid = $response->{'userid'};
+            $responseArray = array(
+                'authtoken' => $authtoken,
+                'access_token' => $access_token,
+                'chatroom_url' => $chatroom_url,
+                'wtbUserid' => $wtbUserid
+            );
+            return $responseArray;
+        }
+      }
+   }   
 }
-
-
 /* Purpose: Execute a HTTP request to validate forum login provided by the user.
 Parameter: forum username, forum password.
 Return: JSON responce */
 function websitetoolbox_plugin_chk($websitetoolbox_forum_username,$websitetoolbox_forum_password,$websitetoolbox_forum_embedded) {
-  $result = loginToForum($websitetoolbox_forum_username,$websitetoolbox_forum_password,$websitetoolbox_forum_embedded); 
-   
+  $result = loginToForum($websitetoolbox_forum_username,$websitetoolbox_forum_password,$websitetoolbox_forum_embedded);    
   if($result) { 
         $response =  json_decode($result->data);        
         if($result->code != 200 || $response->{'errorMessage'}) {
@@ -274,7 +282,6 @@ function websitetoolbox_plugin_chk($websitetoolbox_forum_username,$websitetoolbo
                 variable_del('websitetoolbox_username');
                 variable_set('websitetoolbox_username',$websitetoolbox_forum_username ) ;
                }
-              
              }
              if(variable_get('websitetoolbox_api') == ''){
               variable_set('websitetoolbox_api',$forumApliKey ) ;
@@ -283,7 +290,6 @@ function websitetoolbox_plugin_chk($websitetoolbox_forum_username,$websitetoolbo
                 variable_del('websitetoolbox_api');
                 variable_set('websitetoolbox_api',$forumApliKey ) ;
                }
-              
              }
              if(variable_get('websitetoolbox_url') == ''){
               variable_set('websitetoolbox_url',$forum_address ) ;
@@ -291,11 +297,9 @@ function websitetoolbox_plugin_chk($websitetoolbox_forum_username,$websitetoolbo
                if(variable_get('websitetoolbox_url') != $forum_address){
                 variable_del('websitetoolbox_url');
                 variable_set('websitetoolbox_url',$forum_address) ;
-               }
-              
-             }            
-             
-        }
+               }              
+             }  
+         }
     }
 }  
 function wtbForumSettingsPage($message = "") {
@@ -304,12 +308,9 @@ function wtbForumSettingsPage($message = "") {
     } else if($message && $message != 'success') {
         echo "<div id='wtb-warning' class='error'><p>$message</p></div>";
     }
-    ?>
-    
-    <?php
 }
 /*check forum with username and password*/
-function loginToForum($websitetoolbox_forum_username, $websitetoolbox_forum_password,$websitetoolbox_forum_embedded){
+function loginToForum($websitetoolbox_forum_username, $websitetoolbox_forum_password,$websitetoolbox_forum_embedded){   
   $data = array(
     'action'   => 'checkPluginLogin',
     'username' => $websitetoolbox_forum_username,
@@ -324,13 +325,12 @@ function loginToForum($websitetoolbox_forum_username, $websitetoolbox_forum_pass
     'headers' => array('Content-Type' => 'application/json'),
   );
   $result = drupal_http_request(MY_URL, $options);
+
   $response = json_decode($result->data); 
   $forum_url = $response->{'forumAddress'};
   $forum_address = $response->{'forumAddress'};
   $forumApliKey  = $response->{'forumApiKey'}; 
   $forum_username = $websitetoolbox_forum_username;
-  $complete_forum_url =  $forum_url;
-  
   if($websitetoolbox_forum_embedded == 1){
        #add embed code and set it as a link if "embed" option is disabled.
       updateForumData($forum_username,$forumApliKey,$base_url."/Forum");
@@ -345,13 +345,12 @@ function loginToForum($websitetoolbox_forum_username, $websitetoolbox_forum_pass
 }
 /*update forum data according to embedded enabled or disabled*/
 function updateForumData($forumUsername,$forumAPI,$embedUrl=""){
-      $data = array(   
+    $data = array(   
         'action' => 'modifySSOURLs',
         'forumUsername' => $forumUsername,
         'forumApikey' => $forumAPI,
         'embed_page_url' => $embedUrl
-
-    );
+     );
     $options = array(
         'type'=>'json',
         'method' => 'POST',
@@ -361,12 +360,12 @@ function updateForumData($forumUsername,$forumAPI,$embedUrl=""){
     );
     $result = drupal_http_request(MY_URL, $options);
  }
+
  /*create url if embedded is disabled*/
 function createMenuUrl($response){
   $forum_url = $response->{'forumAddress'};   
-  $complete_forum_url =  $forum_url;
   updateForumData($forum_username,$forumApliKey);
-  $checkMenuExist = menu_get_item($complete_forum_url);
+  $checkMenuExist = menu_get_item($forum_url);
   $node_result = chkForumExist();
   $node = node_load(array_shift(array_keys($node_result['node'])));
   node_delete($node->nid);
@@ -378,7 +377,7 @@ function createMenuUrl($response){
         }
       } 
       $item = array(
-      'link_path' => $complete_forum_url,
+      'link_path' => $forum_url,
       'link_title' => 'Forum',
       'menu_name' => 'main-menu', // Menu machine name, for example: main-menu
       'weight' => 0,
@@ -416,44 +415,13 @@ function createEmbeddedForum($response,$websitetoolbox_forum_embedded){
      $summary = $node->body['und'][0][summary];
     }
     if($summary == '' ){ 
-        db_insert('field_data_body')
-          ->fields(array(
-            'entity_type' => 'node',
-            'bundle'=>'page',
-            'deleted' =>0,
-            'entity_id' => $node_id,
-           
-            'delta'=>0,
-            'revision_id'=>$vid,
-            'language'=>'und',
-            'delta' =>0,
-            'body_value'=>'<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="'.$forum_url.'/js/mb/embed.js"></script>
-      <noscript><a href="'.$forum_url.'">Forum</a></noscript></div>',
-            'body_summary'=>$forum_url,
-            'body_format'=>'full_html',
-
-          ))
-          ->execute();
-           
-        db_insert('field_revision_body')
-          ->fields(array(
-            'entity_type' => 'node',
-            'bundle'=>'page',
-            'deleted' => 0,
-            'entity_id' => $node_id,
-            
-            'delta'=>0,
-            'revision_id'=>$vid,
-            'language'=>'und',
-            'delta' =>0,
-            'body_value'=>'<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="'.$forum_url.'"></script>
-      <noscript><a href="'.$forum_url.'">Forum</a></noscript></div>',
-            'body_summary'=>$forum_url,
-            'body_format'=>'full_html',
-
-          ))
-          ->execute();
-          $forum_url = menu_get_item($complete_forum_url);
+        db_insert('field_data_body')->fields(array('entity_type' => 'node','bundle'=>'page','deleted' =>0,'entity_id' => $node_id,         
+          'delta'=>0,'revision_id'=>$vid,'language'=>'und','delta' =>0,'body_value'=>'<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="'.$forum_url.'/js/mb/embed.js"></script><noscript><a href="'.$forum_url.'">Forum</a></noscript></div>','body_summary'=>$forum_url,
+          'body_format'=>'full_html',))->execute();           
+        db_insert('field_revision_body')->fields(array('entity_type' => 'node','bundle'=>'page','deleted' => 0,'entity_id' => $node_id,     
+            'delta'=>0,'revision_id'=>$vid,'language'=>'und','delta' =>0,'body_value'=>'<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="'.$forum_url.'"></script><noscript><a href="'.$forum_url.'">Forum</a></noscript></div>','body_summary'=>$forum_url,'body_format'=>'full_html',
+          ))->execute();
+          $checkMenuExist = menu_get_item($forum_url);
           if(!$checkMenuExist){
             $menu = menu_load_links('main-menu'); 
             for($i=0;$i<count($menu);$i++){
@@ -461,95 +429,60 @@ function createEmbeddedForum($response,$websitetoolbox_forum_embedded){
                 menu_link_delete(NULL,$menu[$i]['link_path']);
               }
           } 
-             $menuUrl = 'node/'.$node_id;
-             $item = array(
-                'link_path' => $menuUrl,
-                'link_title' => 'Forum',
-                'menu_name' => 'main-menu', // Menu machine name, for example: main-menu
-                'weight' => 0,
-                'language' => $node->language,
-                'plid' => 0, // Parent menu item, 0 if menu item is on top level
-                'module' => 'menu',
-
-            );
-             menu_link_save($item);
-          }        
-           
-          db_insert('url_alias')
-          ->fields(array(
-            'source' => 'node/'.$node_id,
-            'alias'=>'Forum',
-            'language'=>'und',
-
-
-          ))->execute();    
+           $menuUrl = 'node/'.$node_id;
+           $item = array(
+              'link_path' => $menuUrl,
+              'link_title' => 'Forum',
+              'menu_name' => 'main-menu', // Menu machine name, for example: main-menu
+              'weight' => 0,
+              'language' => $node->language,
+              'plid' => 0, // Parent menu item, 0 if menu item is on top level
+              'module' => 'menu',
+          );
+          menu_link_save($item);
+      }                   
+    db_insert('url_alias')->fields(array('source' => 'node/'.$node_id,'alias'=>'Forum','language'=>'und',))->execute();    
     }else{ 
-        if($summary != $forum_url){  
-             db_update('field_data_body')
-          ->fields(array(
-            'body_summary'=>$forum_url,
-            'body_value'=>'<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="'.$forum_url.'/js/mb/embed.js"></script>
-      <noscript><a href="'.$forum_url.'">Forum</a></noscript></div>',
-           
-
-          ))  ->condition('entity_id', $node_id , '=')
-          ->execute();
-             db_update('field_revision_body')
-             ->fields(array(
-             'body_summary'=>$forum_url,
-            'body_value'=>'<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="'.$forum_url.'"></script>
-      <noscript><a href="'.$forum_url.'">Forum</a></noscript></div>',
-            
-
-          ))->condition('entity_id', $node_id , '=')
-          ->execute();
-              
+        if($summary != $forum_url){ 
+            db_update('field_data_body')->fields(array('body_summary'=>$forum_url,'body_value'=>'<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="'.$forum_url.'/js/mb/embed.js"></script><noscript><a href="'.$forum_url.'">Forum</a></noscript></div>',
+              ))->condition('entity_id', $node_id , '=')->execute();
+             db_update('field_revision_body')->fields(array('body_summary'=>$forum_url,'body_value'=>'<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="'.$forum_url.'"></script><noscript><a href="'.$forum_url.'">Forum</a></noscript></div>',))->condition('entity_id', $node_id , '=')->execute();              
         }
-      }
-   
+    }   
 }
 
  /*register new user*/
-function websitetoolbox_user_insert(){
- 
+function websitetoolbox_user_insert(){ 
   $username = $_REQUEST['name'];
   $email = $_REQUEST['mail'];
-  $pass = $_REQUEST['pass'];
-  
+  $pass = $_REQUEST['pass'];  
   $user_data = (object) array('name' => $username, 'mail' => $email, 'pass' => $pass);
   if (isset($_POST['pass1']) && $_POST['pass1'] != "") {
       $password = $_POST['pass1'];
   }else
   {
     $password = '';
-  }
-  
+  }  
   // Fields array.
   $forum_api = variable_get('websitetoolbox_api');
   $forum_url = variable_get('websitetoolbox_url');
   $URL = $forum_url."/register/create_account/?";
   $data = array(   
-  'apikey' => $forum_api,
-  'member' => $username,
-  'email' => $email
-   
-  );
-   
+    'apikey' => $forum_api,
+    'member' => $username,
+    'email' => $email   
+  );   
   $options = array(
     'type'=>'json',
     'method' => 'POST',
     'data' => drupal_http_build_query($data),
-    'timeout' => 15,
-     
+    'timeout' => 15,     
   );   
   $result = drupal_http_request($URL, $options);
   $get_auth_details = websitetoolbox_authtoken($user_data,"register");
   setCookieOnLogin($get_auth_details, "");
-  save_authToken($get_auth_details['authtoken'],$get_auth_details['access_token'],$get_auth_details['chatroom_url'],$get_auth_details['wtbUserid']);
-  
-   
+  save_authToken($get_auth_details['authtoken'],$get_auth_details['access_token'],$get_auth_details['chatroom_url'],$get_auth_details['wtbUserid']); 
 }
-
 function websitetoolbox_user_delete($account) {
     $username = $account->name;
     $forum_api = variable_get('websitetoolbox_api');
@@ -559,15 +492,12 @@ function websitetoolbox_user_delete($account) {
         'apikey' => $forum_api,
         'massaction' => 'decline_mem',
         'usernames' =>  $username
-
     );
-
     $options = array(
         'type'=>'json',
         'method' => 'POST',
         'data' => drupal_http_build_query($data),
         'timeout' => 15,
-
     );
     $result = drupal_http_request($URL, $options);
 }
@@ -623,68 +553,20 @@ function setWtbCookies($cname, $cvalue, $persistent) {
       $wtbBaseCookieOptions['secure'] = true;
       $wtbBaseCookieOptions['samesite'] = 'None';
     }
-    setcookie($cname, $cvalue, $wtbBaseCookieOptions);
   }  
 }
  
-
-function websitetoolbox_user_logout($account) {
-     $forum_api = variable_get('websitetoolbox_api');
-     $forum_url = variable_get('websitetoolbox_url');
-     $logout_auth_url = $forum_url."/register/logout?authtoken=".$_COOKIE['wt_logout_token'];
-    $logout_auth_url = preg_replace('#^https?:#i', '', $logout_auth_url);
-    /* Print image tag on the header section sent logout request on the related forum */
-    echo '<img src="'.$logout_auth_url.'" border="0" width="0" height="0" alt="">';
-    /* If user logged-in on the chat room then logged-out from the chat room */
-    if(isset($_COOKIE['wtchat_logout_token'])) {
-      $chatlogout_auth_url = $_COOKIE['wtchat_url']."/sso/token/logout?access_token=".$_COOKIE['wtchat_logout_token'];
-      echo '<img src="'.$chatlogout_auth_url.'" border="0" width="0" height="0" alt="">';
-    }
-    return false;
-    if(!user_is_logged_in() && isset($_COOKIE['wt_logout_token'])) {
-    $logout_auth_url = $forum_url."/register/logout?authtoken=".$_COOKIE['wt_logout_token'];
-    $logout_auth_url = preg_replace('#^https?:#i', '', $logout_auth_url);
-    /* Print image tag on the header section sent logout request on the related forum */
-    echo '<img src="'.$logout_auth_url.'" border="0" width="0" height="0" alt="">';
-    /* If user logged-in on the chat room then logged-out from the chat room */
-    if(isset($_COOKIE['wtchat_logout_token'])) {
-      $chatlogout_auth_url = $_COOKIE['wtchat_url']."/sso/token/logout?access_token=".$_COOKIE['wtchat_logout_token'];
-      echo '<img src="'.$chatlogout_auth_url.'" border="0" width="0" height="0" alt="">';
-    }
-
-    resetCookieOnLogout();
-    $element = array(
-      '#tag' => 'img', // The #tag is the html tag - 
-      '#attributes' => array( // Set up an array of attributes inside the tag
-      'src' => $logout_auth_url, 
-     
-    ),
-    );
-    /*update image tag before </body> for logout*/
-    drupal_add_html_head($element);
-    return false;
-  }
-   
-}
-
-function resetCookieOnLogout() {  
- 
+function resetCookieOnLogout() {   
     unset($_COOKIE['wt_logout_token']);
-     setcookie('wt_logout_token', 0, time() - 3600, $base_path);
-
+    setcookie('wt_logout_token', 0, time() - 3600, $base_path);
     unset($_COOKIE['wtchat_logout_token']);
-     setcookie('wtchat_logout_token', '', time() - 3600, $base_path);
-
+    setcookie('wtchat_logout_token', '', time() - 3600, $base_path);
     unset($_COOKIE['wtchat_url']);
-     setcookie('wtchat_url', '', time() - 3600, $base_path);
-
+    setcookie('wtchat_url', '', time() - 3600, $base_path);
     unset($_COOKIE['wtb_login_userid']);
-     setcookie('wtb_login_userid', '', time() - 3600, $base_path);
-
+    setcookie('wtb_login_userid', '', time() - 3600, $base_path);
     unset($_COOKIE['wt_login_remember']);
-     setcookie('wt_login_remember', '', time() - 3600, $base_path);
-  
-  
+    setcookie('wt_login_remember', '', time() - 3600, $base_path);  
 }
 function unsetLoginSession() {
     unset($_SESSION['wtb_login_auth_token']);
@@ -693,12 +575,9 @@ function unsetLoginSession() {
 }
 
 function websitetoolbox_user_update(&$edit, $account, $category){
-
-  global $user;
-  
+  global $user;  
   $forum_api = variable_get('websitetoolbox_api');
   $forum_url = variable_get('websitetoolbox_url');
-
   $LoggedinUserid = $user->uid;
   $dProfileUserid = $edit['uid'];
   // change updated userid if admin update other user profile else get update userid from the cookie.
@@ -706,65 +585,56 @@ function websitetoolbox_user_update(&$edit, $account, $category){
   if($LoggedinUserid != $wpProfileUserid) {
     $email =  $edit['mail'];
     $avatar =  $edit['picture'];
-    $author = user_load($edit['uid']);
-    
-
+    $author = user_load($edit['uid']);  
   }else{
     $email =  $user->mail;
     $avatar =  $user->picture;
     $author = user_load($account->uid);
-   
   }
   $userId = getUserid($email);
-   $author = user_load($account->uid);
- $avatar_url = file_create_url($author->picture->uri);
+  $author = user_load($account->uid);
+  $avatar_url = file_create_url($author->picture->uri);
   // Update user data on the forum.
-  if($userId) {
-     
+  if($userId) {     
     $data =  array(
       "email"     => $email,        
       "avatarUrl" => $avatar_url,       
-    );
- 
-    apiRequest('POST', "/users/$userId", $data);
-        
-  }
- 
+    ); 
+    apiRequest('POST', "/users/$userId", $data);        
+  } 
 }
 function getUserid($userEmail) {
   if($userEmail) {
     $data =  array(
       "email" => $userEmail,
-
-    );
-   
-$response = apiRequest('GET', "/users/", $data);
+    );   
+  $response = apiRequest('GET', "/users/", $data);
     if($response->{data}[0]->{userId}) {
       return $response->{data}[0]->{userId};
     }
   }
 }
 function apiRequest($method, $path, $data) {
-    $url = API_URL.$path;
-    if(strtoupper($method) == "GET") {
-      $url = sprintf("%s?%s", $url, http_build_query($data));
-    }
-    $curl = curl_init();
-    curl_setopt($curl, CURLOPT_URL, $url);
-    curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+  $url = API_URL.$path;
+  if(strtoupper($method) == "GET") {
+    $url = sprintf("%s?%s", $url, http_build_query($data));
+  }
+  $curl = curl_init();
+  curl_setopt($curl, CURLOPT_URL, $url);
+  curl_setopt($curl, CURLOPT_HTTPHEADER, array(
     "x-api-key: ".variable_get('websitetoolbox_api'),
     'Content-Type: application/json',
-    ));
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-    if(strtoupper($method) == "POST") {
-      curl_setopt($curl, CURLOPT_POST, true);
-      curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
-    } else if (strtoupper($method) == "GET") {
-      curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-    }
-    $response = curl_exec($curl);
-    curl_close($curl);
-    return json_decode($response);
+  ));
+  curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+  if(strtoupper($method) == "POST") {
+    curl_setopt($curl, CURLOPT_POST, true);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
+  } else if (strtoupper($method) == "GET") {
+    curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+  }
+  $response = curl_exec($curl); 
+  curl_close($curl);
+  return json_decode($response);
 }
 
 /* Purpose: remove paramete and it's value from the URL.
