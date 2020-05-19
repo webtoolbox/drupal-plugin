@@ -1,0 +1,14 @@
+
+name = websitetoolbox
+
+description = websitetoolbox Settings
+
+core = 7.x
+
+package = tools
+
+ 
+version = 7.x-1.0-dev
+
+//dependencies[] = ctools
+configure = admin/config/content/websitetoolbox
