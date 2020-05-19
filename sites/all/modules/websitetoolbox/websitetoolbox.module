@@ -158,10 +158,17 @@ function websitetoolbox_admin() {
     
       '#required' => FALSE,
     );
-      $form['websitetoolbox_description'] = array(
-      '#description' => 'adsad',
+       $form['websitetoolbox_description'] = array(
+      '#type' => 'url',
       
-    );
+      '#default_value' => "dasdasdd",
+      '#size' => 60,
+      '#maxlength' => 250,
+       
+      '#required' => TRUE,
+    ); 
+
+
 
     $form['#submit'][] = 'websitetoolbox_admin_submit';
      
