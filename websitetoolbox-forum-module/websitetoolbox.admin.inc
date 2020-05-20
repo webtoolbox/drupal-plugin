@@ -44,18 +44,18 @@
       /*create module admin configuration form*/
       /*submit username and password for forum configuation */
       function adminConfigPageSubmit($formId, &$formState){
-        if($_REQUEST['wtb_forum_username'] != ''){
-          $wtbForumUsername = $_REQUEST['wtb_forum_username'];
+        if($_POST['wtb_forum_username'] != ''){
+          $wtbForumUsername = $_POST['wtb_forum_username'];
         }else{
           $wtbForumUsername = variable_get('wtb_forum_username');
         }
-        if($_REQUEST['wtb_forum_password'] != ''){
-          $wtbForumPassword = $_REQUEST['wtb_forum_password'];
+        if($_POST['wtb_forum_password'] != ''){
+          $wtbForumPassword = $_POST['wtb_forum_password'];
         }else{
           $wtbForumPassword = variable_get('wtb_forum_password');
         }
 
-        $wtbForumEmbedded = $_REQUEST['wtb_forum_embedded'];
+        $wtbForumEmbedded = $_POST['wtb_forum_embedded'];
         if($wtbForumEmbedded == 1){
           $wtbForumEmbedded = 1;
         }else{
@@ -83,23 +83,27 @@
           'headers' => array('Content-Type' => 'application/json'),
         );
         $result = drupal_http_request(MY_URL, $options);
+        if($result){
+            $response = json_decode($result->data);
+            $wtbForumUrl = $response->{'forumAddress'};
+            $forumAddress = $response->{'forumAddress'};
+            $forumApliKey  = $response->{'forumApiKey'};
+            $forumUsername = $wtbForumUsername;
+            if($wtbForumEmbedded == 1){
+              #add embed code and set it as a link if "embed" option is disabled.
+              updateForumData($forumUsername,$forumApliKey,$base_url."/Forum");
+              createEmbeddedForum($response,$wtbForumEmbedded);
+            }else{
+              #Remove embed code and set it as a link if "embed" option is disabled.
+              updateForumData($forumUsername,$forumApliKey);
+              createForumMenuUrl($response);
 
-        $response = json_decode($result->data);
-        $wtbForumUrl = $response->{'forumAddress'};
-        $forumAddress = $response->{'forumAddress'};
-        $forumApliKey  = $response->{'forumApiKey'};
-        $forumUsername = $wtbForumUsername;
-        if($wtbForumEmbedded == 1){
-          #add embed code and set it as a link if "embed" option is disabled.
-          updateForumData($forumUsername,$forumApliKey,$base_url."/Forum");
-          createEmbeddedForum($response,$wtbForumEmbedded);
+            }
+            return $result;
         }else{
-          #Remove embed code and set it as a link if "embed" option is disabled.
-          updateForumData($forumUsername,$forumApliKey);
-          createMenuUrl($response);
-
+        	drupal_set_message($result->error);
+        	die();
         }
-        return $result;
       }
       /*update forum data according to embedded enabled or disabled*/
       function updateForumData($forumUsername,$forumAPI,$embedUrl=""){
@@ -116,11 +120,16 @@
           'timeout' => 15,
 
         );
+
         $result = drupal_http_request(MY_URL, $options);
+        if(!$result){
+        	drupal_set_message($result->error);
+        	die();
+        }
       }
 
       /*create url if embedded is disabled*/
-      function createMenuUrl($response){
+      function createForumMenuUrl($response){
         $wtbForumUrl = $response->{'forumAddress'};
         updateForumData($forumUsername,$forumApliKey);
         $checkMenuExist = menu_get_item($wtbForumUrl);
@@ -160,11 +169,9 @@
         $wtbForumUrl = $response->{'forumAddress'};
         if(empty($nodeResult)){
           global $user;
-
+          var $summary = '';
           $node = (object) array('uid' => $user->uid, 'name' => (isset($user->name) ? $user->name : ''),'type' => 'page', 'language' => LANGUAGE_NONE, 'title' => 'Forum');
-
           node_save($node);
-
           $nodeId = $node->nid;
           $vid = $node->vid;
         }else{
