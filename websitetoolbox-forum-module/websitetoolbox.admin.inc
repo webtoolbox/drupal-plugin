@@ -169,9 +169,11 @@
         $wtbForumUrl = $response->{'forumAddress'};
         if(empty($nodeResult)){
           global $user;
-          var $summary = '';
+          $summary = '';
           $node = (object) array('uid' => $user->uid, 'name' => (isset($user->name) ? $user->name : ''),'type' => 'page', 'language' => LANGUAGE_NONE, 'title' => 'Forum');
+
           node_save($node);
+
           $nodeId = $node->nid;
           $vid = $node->vid;
         }else{
@@ -206,9 +208,10 @@
             'module' => 'menu',
           );
           menu_link_save($item);
+          db_insert('url_alias')->fields(array('source' => 'node/'.$nodeId,'alias'=>'Forum','language'=>'und',))->execute();
           cache_clear_all('*', 'cache_menu', TRUE);
         }
-        db_insert('url_alias')->fields(array('source' => 'node/'.$nodeId,'alias'=>'Forum','language'=>'und',))->execute();
+
       }else{
         if($summary != $wtbForumUrl){
           db_update('field_data_body')->fields(array('body_summary'=>$wtbForumUrl,'body_value'=>'<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="'.$wtbForumUrl.'/js/mb/embed.js"></script><noscript><a href="'.$wtbForumUrl.'">Forum</a></noscript></div>',
