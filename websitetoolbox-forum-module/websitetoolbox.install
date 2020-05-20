@@ -1,0 +1,9 @@
+<?php
+function WebsiteToolbox_uninstall() {
+    variable_del('wtb_api_key');
+    variable_del('wtb_forums_url');
+    variable_del('wtb_forum_username');
+    variable_del('wtb_forum_password');
+    variable_del('wtb_forum_embedded');
+}
+?>
