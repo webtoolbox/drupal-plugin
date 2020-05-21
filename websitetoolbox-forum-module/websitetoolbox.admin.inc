@@ -93,20 +93,20 @@ function loginToForum($wtbForumUsername, $wtbForumPassword, $wtbForumEmbedded)
             'Content-Type' => 'application/json'
         )
     );
-    $result  = drupal_http_request(MY_URL, $options);
+    $result  = drupal_http_request(WTB_SETTINGS_URL, $options);
     if ($result) {
         $response      = json_decode($result->data);
         $wtbForumUrl   = $response->{'forumAddress'};
         $forumAddress  = $response->{'forumAddress'};
-        $forumApliKey  = $response->{'forumApiKey'};
+        $forumApiKey  = $response->{'forumApiKey'};
         $forumUsername = $wtbForumUsername;
         if ($wtbForumEmbedded == 1) {
             #add embed code and set it as a link if "embed" option is disabled.
-            updateForumData($forumUsername, $forumApliKey, $base_url . "/Forum");
+            updateForumData($forumUsername, $forumApiKey, $base_url . "/Forum");
             createEmbeddedForum($response, $wtbForumEmbedded);
         } else {
             #Remove embed code and set it as a link if "embed" option is disabled.
-            updateForumData($forumUsername, $forumApliKey);
+            updateForumData($forumUsername, $forumApiKey);
             createForumMenuUrl($response);
 
         }
@@ -132,7 +132,7 @@ function updateForumData($forumUsername, $forumAPI, $embedUrl = "")
         'timeout' => 15
 
     );
-    $result  = drupal_http_request(MY_URL, $options);
+    $result  = drupal_http_request(WTB_SETTINGS_URL, $options);
     if (!$result) {
         drupal_set_message($result->error);
         die();
@@ -142,7 +142,7 @@ function updateForumData($forumUsername, $forumAPI, $embedUrl = "")
 function createForumMenuUrl($response)
 {
     $wtbForumUrl = $response->{'forumAddress'};
-    updateForumData($forumUsername, $forumApliKey);
+    updateForumData($forumUsername, $forumApiKey);
     $checkMenuExist = menu_get_item($wtbForumUrl);
     $nodeResult     = chkForumExist();
     $node           = node_load(array_shift(array_keys($nodeResult['node'])));
@@ -249,8 +249,7 @@ function createEmbeddedForum($response, $wtbForumEmbedded)
             cache_clear_all('*', 'cache_menu', TRUE);
         }
 
-    } else {
-        if ($summary != $wtbForumUrl) {
+    } elseif ($summary != $wtbForumUrl) {
             db_update('field_data_body')->fields(array(
                 'body_summary' => $wtbForumUrl,
                 'body_value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $wtbForumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $wtbForumUrl . '">Forum</a></noscript></div>'
@@ -260,7 +259,7 @@ function createEmbeddedForum($response, $wtbForumEmbedded)
                 'body_value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $wtbForumUrl . '"></script><noscript><a href="' . $wtbForumUrl . '">Forum</a></noscript></div>'
             ))->condition('entity_id', $nodeId, '=')->execute();
         }
-    }
+
 }
 /* Purpose: Execute a HTTP request to validate forum login provided by the user.
 Parameter: forum username, forum password.
@@ -285,30 +284,26 @@ function wtbForumPluginCheck($wtbForumUsername, $wtbForumPassword, $wtbForumEmbe
             exit;
         } else {
             $forumAddress = $response->{'forumAddress'};
-            $forumApliKey = $response->{'forumApiKey'};
+            $forumApiKey = $response->{'forumApiKey'};
             if (variable_get('wtb_username') == '') {
                 variable_set('wtb_username', $wtbForumUsername);
-            } else {
-                if (variable_get('wtb_username') != $wtbForumUsername) {
-                    variable_del('wtb_username');
-                    variable_set('wtb_username', $wtbForumUsername);
-                }
+            } elseif (variable_get('wtb_username') != $wtbForumUsername) {
+                variable_del('wtb_username');
+                variable_set('wtb_username', $wtbForumUsername);
             }
+
             if (variable_get('wtb_api_key') == '') {
-                variable_set('wtb_api_key', $forumApliKey);
-            } else {
-                if (variable_get('wtb_api_key') != $forumApliKey) {
-                    variable_del('wtb_api_key');
-                    variable_set('wtb_api_key', $forumApliKey);
-                }
+                variable_set('wtb_api_key', $forumApiKey);
+            } elseif (variable_get('wtb_api_key') != $forumApiKey) {
+                variable_del('wtb_api_key');
+                variable_set('wtb_api_key', $forumApiKey);
             }
+
             if (variable_get('wtb_forums_url') == '') {
                 variable_set('wtb_forums_url', $forumAddress);
-            } else {
-                if (variable_get('wtb_forums_url') != $forumAddress) {
-                    variable_del('wtb_forums_url');
-                    variable_set('wtb_forums_url', $forumAddress);
-                }
+            } elseif (variable_get('wtb_forums_url') != $forumAddress) {
+                variable_del('wtb_forums_url');
+                variable_set('wtb_forums_url', $forumAddress);
             }
         }
     }
