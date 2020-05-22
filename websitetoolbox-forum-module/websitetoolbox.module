@@ -1,9 +1,9 @@
-<?php
+<?php 
 global $base_url;
 global $base_path;
 include("websitetoolbox.include.inc");
-DEFINE(WTB_SETTINGS_URL, 'https://www.websitetoolbox.com/tool/members/mb/settings');
-DEFINE(API_URL, 'https://api.websitetoolbox.com/v1/api');
+DEFINE(WTB_SETTINGS_URL, 'https://beta17.websitetoolbox.com/tool/members/mb/settings');
+DEFINE(API_URL, 'https://api.websitetoolbox.com/dev/api');
 DEFINE(COOKIEPATH, $base_path);
 DEFINE(COOKIE_DOMAIN, $base_url);
 
@@ -111,48 +111,51 @@ function wtbGetAuthtoken($user, $type)
     $wtbForumsApiKey = variable_get('wtb_api_key');
     $wtbForumUrl     = variable_get('wtb_forums_url');
     if ($wtbForumsApiKey) {
+        
         $username = $user->name;
         $email    = $user->mail;
+        $userId   = $user->uid;
         $URL      = $wtbForumUrl . "/register/setauthtoken";
         $data     = array(
             'type' => 'json',
             'apikey' => $wtbForumsApiKey,
             'user' => $username,
-            'email' => $email
-
+            'email' => $email,
+            'externalUserid' => $userId
+            
         );
         $options  = array(
             'type' => 'json',
             'method' => 'POST',
             'data' => drupal_http_build_query($data),
             'timeout' => 15
-
+            
         );
         $pass     = $user->pass;
         if (isset($pass) && $pass != "") {
             $data['pw'] = $pass;
         }
         $result = drupal_http_request($URL, $options);
-
+        
         //Check if http/https request could not return any error then filter JSON from response
         if ($result) {
             $response = json_decode($result->data);
             if ($response && $response->{'authtoken'} != "") {
                 $authtoken    = $response->{'authtoken'};
                 $access_token = '';
-
+                
                 // Check if "-" exist in the authtoken then first part is authtoken (login on the forum) second part is access token login on Chat Room.
                 if (strpos($authtoken, "-") !== false) {
                     $tokens       = explode("-", $authtoken);
                     $authtoken    = $tokens[0];
                     $access_token = $tokens[1];
-
+                    
                 }
                 $wtbUserid     = $response->{'userid'};
                 $responseArray = array(
                     'authtoken' => $authtoken,
-
-
+                    
+                    
                     'wtbUserid' => $wtbUserid
                 );
                 return $responseArray;
@@ -170,15 +173,17 @@ function wtbForumSettingsPage($message = "")
     }
 }
 /*register new user*/
-function WebsiteToolbox_user_insert()
+function WebsiteToolbox_user_insert(&$edit, $account, $category)
 {
     $username = $_POST['name'];
     $email    = $_POST['mail'];
     $pass     = $_POST['pass'];
+    $userId   = $account->uid;
     $userData = (object) array(
         'name' => $username,
         'mail' => $email,
-        'pass' => $pass
+        'pass' => $pass,
+        'externalUserid' => $userId
     );
     if (isset($_POST['pass1']) && $_POST['pass1'] != "") {
         $password = $_POST['pass1'];
@@ -192,7 +197,8 @@ function WebsiteToolbox_user_insert()
     $data            = array(
         'apikey' => $wtbForumsApiKey,
         'member' => $username,
-        'email' => $email
+        'email' => $email,
+        'externalUserid' => $userId
     );
     $options         = array(
         'type' => 'json',
@@ -200,7 +206,7 @@ function WebsiteToolbox_user_insert()
         'data' => drupal_http_build_query($data),
         'timeout' => 15
     );
-
+    
     $result = drupal_http_request($URL, $options);
     if (!$result) {
         drupal_set_message($result->error);
@@ -210,6 +216,8 @@ function WebsiteToolbox_user_insert()
     $getAuthDetails = wtbGetAuthtoken($userData, "register");
     setCookieOnLogin($getAuthDetails, "");
     saveAuthToken($getAuthDetails['authtoken'], $getAuthDetails['access_token'], $getAuthDetails['wtbUserid']);
+    drupal_static_reset();
+    drupal_flush_all_caches();
 }
 function WebsiteToolbox_user_login(&$edit, $account)
 {
@@ -218,6 +226,8 @@ function WebsiteToolbox_user_login(&$edit, $account)
     $getAuthDetails = wtbGetAuthtoken($user, "login");
     setCookieOnLogin($getAuthDetails, "");
     saveAuthToken($getAuthDetails['authtoken'], $getAuthDetails['access_token'], $getAuthDetails['wtbUserid']);
+    drupal_static_reset();
+    drupal_flush_all_caches();
 }
 /*get authtoken, save authtoken, create cookies after user logged in*/
 
@@ -228,7 +238,7 @@ function saveAuthToken($authtoken, $access_token, $wtbUserid)
     $_SESSION['wtbLoginAuthToken'] = $authtoken;
     setWtbCookies('wtbLoginUserid', $wtbUserid, 0);
     // Save access token into a session to login user on the caht room
-
+    
 }
 function WebsiteToolbox_user_delete($account)
 {
@@ -247,7 +257,7 @@ function WebsiteToolbox_user_delete($account)
         'data' => drupal_http_build_query($data),
         'timeout' => 15
     );
-
+    
     $result = drupal_http_request($URL, $options);
     if (!$result) {
         drupal_set_message($result->error);
@@ -255,33 +265,43 @@ function WebsiteToolbox_user_delete($account)
     }
 }
 
-function WebsiteToolbox_user_update(&$edit, $account, $category)
+function WebsiteToolbox_user_presave(&$edit, $account, $category)
 {
     global $user;
+    
     $wtbForumsApiKey = variable_get('wtb_api_key');
     $wtbForumUrl     = variable_get('wtb_forums_url');
     $LoggedinUserid  = $user->uid;
     $dProfileUserid  = $edit['uid'];
+    $emailToVerify   = $account->mail;
     // change updated userid if admin update other user profile else get update userid from the cookie.
     // WTB logged-in userid store in the cookie when user logged-in on the WordPress website.
-    if ($LoggedinUserid != $wpProfileUserid) {
-        $email  = $edit['mail'];
-        $avatar = $edit['picture'];
-        $author = user_load($edit['uid']);
+    if ($LoggedinUserid != $dProfileUserid) {
+        $externalUserid = $edit['uid'];
+        $email          = $edit['mail'];
+        $userName       = $edit['name'];
+        $avatar         = $edit['picture'];
+        $author         = user_load($edit['uid']);
     } else {
-        $email  = $user->mail;
-        $avatar = $user->picture;
-        $author = user_load($account->uid);
+        $externalUserid = $user->uid;
+        $email          = $user->mail;
+        $userName       = $user->name;
+        $avatar         = $user->picture;
+        $author         = user_load($account->uid);
     }
-    $userId     = getUserid($email);
+    $userId     = getUserid($emailToVerify);
     $author     = user_load($account->uid);
     $avatar_url = file_create_url($author->picture->uri);
     // Update user data on the forum.
     if ($userId) {
         $data = array(
             "email" => $email,
-            "avatarUrl" => $avatar_url
+            "avatarUrl" => $avatar_url,
+            "username" => $userName,
+            "externalUserid" => $externalUserid,
+            "name" => $userName
         );
+        
         apiRequest('POST', "/users/$userId", $data);
     }
 }

@@ -74,15 +74,22 @@ function adminConfigPageSubmit($formId, &$formState)
         $wtbForumEmbedded = 0;
     }
     wtbForumPluginCheck($wtbForumUsername, $wtbForumPassword, $wtbForumEmbedded);
+    drupal_static_reset();
+    drupal_flush_all_caches();
 }
 /*submit username and password for forum configuation */
 /*get authtoken, save authtoken, create cookies after user logged in*/
 function loginToForum($wtbForumUsername, $wtbForumPassword, $wtbForumEmbedded)
 {
+    global $base_url;
+     
     $data    = array(
         'action' => 'checkPluginLogin',
         'username' => $wtbForumUsername,
-        'password' => $wtbForumPassword
+        'password' => $wtbForumPassword,
+        'login_page_url' => $base_url."/?q=user",
+        'logout_page_url' => $base_url."/?q=user/logout",
+        'registration_url' => $base_url."/?q=user/register",
     );
     $options = array(
         'type' => 'json',
@@ -94,20 +101,30 @@ function loginToForum($wtbForumUsername, $wtbForumPassword, $wtbForumEmbedded)
         )
     );
     $result  = drupal_http_request(WTB_SETTINGS_URL, $options);
+    
+   
     if ($result) {
         $response      = json_decode($result->data);
         $wtbForumUrl   = $response->{'forumAddress'};
         $forumAddress  = $response->{'forumAddress'};
         $forumApiKey  = $response->{'forumApiKey'};
         $forumUsername = $wtbForumUsername;
-        if ($wtbForumEmbedded == 1) {
-            #add embed code and set it as a link if "embed" option is disabled.
-            updateForumData($forumUsername, $forumApiKey, $base_url . "/Forum");
+        if ($wtbForumEmbedded == 1) { 
+            #add embed code and set it as a link if "embed" option is disabled.            
             createEmbeddedForum($response, $wtbForumEmbedded);
+            global $base_url;
+            $menu = menu_load_links('main-menu');
+            for ($i = 0; $i < count($menu); $i++) {
+                if ($menu[$i]['link_title'] == 'Forum') {
+                     $menu_link = $menu[$i]['link_path'];
+                }
+            } 
+            updateForumData($forumUsername, $forumApiKey, $base_url."/".$menu_link);
         } else {
-            #Remove embed code and set it as a link if "embed" option is disabled.
-            updateForumData($forumUsername, $forumApiKey);
+            #Remove embed code and set it as a link if "embed" option is disabled.            
             createForumMenuUrl($response);
+             
+            updateForumData($forumUsername, $forumApiKey);
 
         }
         return $result;
@@ -118,20 +135,28 @@ function loginToForum($wtbForumUsername, $wtbForumPassword, $wtbForumEmbedded)
 }
 /*update forum data according to embedded enabled or disabled*/
 function updateForumData($forumUsername, $forumAPI, $embedUrl = "")
-{
+{   
+    global $base_url;
+   
+        
     $data    = array(
         'action' => 'modifySSOURLs',
         'forumUsername' => $forumUsername,
         'forumApikey' => $forumAPI,
-        'embed_page_url' => $embedUrl
+        'embed_page_url' => $embedUrl,
+        'login_page_url' => $base_url."/?q=user",
+        'logout_page_url' => $base_url."/?q=user/logout",
+        'registration_url' => $base_url."/?q=user/register",
     );
-    $options = array(
+
+     $options = array(
         'type' => 'json',
         'method' => 'POST',
         'data' => drupal_http_build_query($data),
         'timeout' => 15
 
     );
+    
     $result  = drupal_http_request(WTB_SETTINGS_URL, $options);
     if (!$result) {
         drupal_set_message($result->error);
@@ -142,7 +167,7 @@ function updateForumData($forumUsername, $forumAPI, $embedUrl = "")
 function createForumMenuUrl($response)
 {
     $wtbForumUrl = $response->{'forumAddress'};
-    updateForumData($forumUsername, $forumApiKey);
+    
     $checkMenuExist = menu_get_item($wtbForumUrl);
     $nodeResult     = chkForumExist();
     $node           = node_load(array_shift(array_keys($nodeResult['node'])));
@@ -172,8 +197,12 @@ function chkForumExist(){
     $nodeResult = (new EntityFieldQuery())->entityCondition('entity_type', 'node')->propertyCondition('title', 'Forum')->execute();
     return $nodeResult;
 }
+function chkForumExist(){
+    $nodeResult = (new EntityFieldQuery())->entityCondition('entity_type', 'node')->propertyCondition('title', 'Forum')->execute();
+    return $nodeResult;
+}
 function createEmbeddedForum($response, $wtbForumEmbedded)
-{
+{   
     $nodeResult  = chkForumExist();
     $wtbForumUrl = $response->{'forumAddress'};
     if (empty($nodeResult)) {
@@ -222,34 +251,38 @@ function createEmbeddedForum($response, $wtbForumEmbedded)
             'body_summary' => $wtbForumUrl,
             'body_format' => 'full_html'
         ))->execute();
-        $checkMenuExist = menu_get_item($wtbForumUrl);
-        if (!$checkMenuExist) {
-            $menu = menu_load_links('main-menu');
+        $menu = menu_load_links('main-menu');
             for ($i = 0; $i < count($menu); $i++) {
                 if ($menu[$i]['link_title'] == 'Forum') {
                     menu_link_delete(NULL, $menu[$i]['link_path']);
                 }
             }
-            $menuUrl = 'node/' . $nodeId;
-            $item    = array(
-                'link_path' => $menuUrl,
-                'link_title' => 'Forum',
-                'menu_name' => 'main-menu', // Menu machine name, for example: main-menu
-                'weight' => 0,
-                'language' => $node->language,
-                'plid' => 0, // Parent menu item, 0 if menu item is on top level
-                'module' => 'menu'
-            );
-            menu_link_save($item);
-            db_insert('url_alias')->fields(array(
-                'source' => 'node/' . $nodeId,
-                'alias' => 'Forum',
-                'language' => 'und'
-            ))->execute();
-            cache_clear_all('*', 'cache_menu', TRUE);
+        
+        $checkMenuExist = menu_get_item($wtbForumUrl);         
+        $menu = menu_load_links('main-menu');
+        for ($i = 0; $i < count($menu); $i++) {
+            if ($menu[$i]['link_title'] == 'Forum') {
+                menu_link_delete(NULL, $menu[$i]['link_path']);
+            }
         }
-
-    } elseif ($summary != $wtbForumUrl) {
+        $menuUrl = 'node/' . $nodeId;
+             $item    = array(
+            'link_path' => $menuUrl,
+            'link_title' => 'Forum',
+            'menu_name' => 'main-menu', // Menu machine name, for example: main-menu
+            'weight' => 0,
+            'language' => $node->language,
+            'plid' => 0, // Parent menu item, 0 if menu item is on top level
+            'module' => 'menu'
+        );
+        menu_link_save($item);
+        db_insert('url_alias')->fields(array(
+            'source' => 'node/' . $nodeId,
+            'alias' => 'Forum',
+            'language' => 'und'
+        ))->execute();
+        cache_clear_all('*', 'cache_menu', TRUE);  
+ } elseif ($summary != $wtbForumUrl) {
             db_update('field_data_body')->fields(array(
                 'body_summary' => $wtbForumUrl,
                 'body_value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $wtbForumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $wtbForumUrl . '">Forum</a></noscript></div>'
