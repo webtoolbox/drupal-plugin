@@ -1,6 +1,6 @@
 CONTENTS OF THIS FILE
 ---------------------
-
+   
  * Introduction
  * Requirements
  * Installation
@@ -18,7 +18,7 @@ program is not flattening the directory tree, truncating filenames or losing
 files.
 
 
-
+ 
 
 INSTALLATION
 ------------

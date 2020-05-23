@@ -2,8 +2,8 @@
 global $base_url;
 global $base_path;
 include("websitetoolbox.include.inc");
-DEFINE(WTB_SETTINGS_URL, 'https://beta17.websitetoolbox.com/tool/members/mb/settings');
-DEFINE(API_URL, 'https://api.websitetoolbox.com/dev/api');
+DEFINE(WTB_SETTINGS_URL, 'https://www.websitetoolbox.com/tool/members/mb/settings');
+DEFINE(API_URL, 'https://api.websitetoolbox.com/v1/api');
 DEFINE(COOKIEPATH, $base_path);
 DEFINE(COOKIE_DOMAIN, $base_url);
 
