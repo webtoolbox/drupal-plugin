@@ -2,10 +2,7 @@ CONTENTS OF THIS FILE
 ---------------------
    
  * Introduction
- * Requirements
  * Installation
- * Configuration
- * Recommended
 
 
 INTRODUCTION
@@ -27,6 +24,6 @@ Install as you would normally install a contributed Drupal module. See:
 https://drupal.org/documentation/install/modules-themes/modules-7 for further
 information.
 
-Navigate to administer >> modules. Enable WebsiteToolbox Forums.
+Navigate to Administrator >> Modules. Enable WebsiteToolbox Forum.
 
 

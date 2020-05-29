@@ -1,5 +1,5 @@
-name = WebSite Toolbox Forums
-description = Website Toolbox Forums Settings
+name = Website Toolbox Forum
+description = Website Toolbox Forum Settings
 core = 7.x
 package = tools
 version = 7.x-1.0-dev

@@ -1,6 +1,6 @@
 <?php 
 function WebsiteToolbox_uninstall() {
-	$wtbForumUrl = variable_get('wtb_forums_url');
+	$wtbForumUrl = variable_get('forums_url');
 	$nodeResult = (new EntityFieldQuery())
         ->entityCondition('entity_type', 'node')
         ->propertyCondition('title', 'Forum')
@@ -15,15 +15,16 @@ function WebsiteToolbox_uninstall() {
 	}
 	$num_deleted = db_delete('url_alias')
     ->condition('alias', "Forum")
-    ->execute();
-	variable_del('wtb_api_key'); 
-	variable_del('wtb_forums_url'); 
-	variable_del('wtb_forum_username'); 
-	variable_del('wtb_forum_password'); 
-	variable_del('wtb_forum_embedded'); 
+    ->execute();   
+	variable_del('forum_api_key'); 
+	variable_del('forum_url'); 
+	variable_del('forum_username'); 
+	variable_del('forum_password'); 
+	variable_del('forum_embedded_option'); 
+
 }
 function  WebsiteToolbox_disable(){
-	$wtbForumUrl = variable_get('wtb_forums_url');
+	$wtbForumUrl = variable_get('forum_url');
 	$nodeResult = (new EntityFieldQuery())
 	->entityCondition('entity_type', 'node')
 	->propertyCondition('title', 'Forum')
@@ -39,10 +40,10 @@ function  WebsiteToolbox_disable(){
 	$num_deleted = db_delete('url_alias')
 	->condition('alias', "Forum")
 	->execute();
-	variable_del('wtb_api_key'); 
-	variable_del('wtb_forums_url'); 
-	variable_del('wtb_forum_username'); 
-	variable_del('wtb_forum_password'); 
-	variable_del('wtb_forum_embedded'); 
+	variable_del('forum_api_key'); 
+	variable_del('forum_url'); 
+	variable_del('forum_username'); 
+	variable_del('forum_password'); 
+	variable_del('forum_embedded_option');
 }
 ?>
