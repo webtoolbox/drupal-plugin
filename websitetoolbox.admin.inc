@@ -1,10 +1,7 @@
 <?php
-/*submit username and password for forum configuation */
-/*get authtoken, save authtoken, create cookies after user logged in*/
-namespace forumAdminConfigeSettingPage {
+namespace websiteToolboxSettings {
     /*create module admin configuration form*/
-    function adminConfigPageLayout()
-    {
+    function adminConfigPageLayout(){
         $form                   = array();
         $html                   = '<h2>Forums by Website Toolbox</h2><br /><b>Please log in to your Website Toolbox account.</b><p>Not a Website Toolbox Forum owner? <a href="https://www.websitetoolbox.com/wordpress" target="_blank">Create a Forum Now!</a></p><p>Please <a href="https://www.websitetoolbox.com/contact?subject=WordPress+Plugin+Setup+Help" target="_blank">Contact Customer Support</a> if you need help getting set up.</p>';
         $form['display_html'][] = array(
@@ -64,7 +61,7 @@ namespace forumAdminConfigeSettingPage {
             );
         }
         
-        $form['#submit'][] = 'forumAdminConfigeSettingPage\adminConfigPageSubmit';
+        $form['#submit'][] = 'websiteToolboxSettings\adminConfigPageSubmit';
         return system_settings_form($form);
     }
     /*create module admin configuration form*/

@@ -1,5 +1,5 @@
 <?php
-namespace forumSSOActivity {
+namespace WebsiteToolboxSSO {
     function getForumAuthtoken($user, $type)
     {
         if ($type == 'login') {
@@ -75,13 +75,13 @@ namespace forumSSOActivity {
             $data     = array(
                 "email" => $userEmail
             );
-            $response = apiRequest('GET', "/users/", $data);
+            $response = sendApiRequest('GET', "/users/", $data);
             if ($response->{data}[0]->{userId}) {
                 return $response->{data}[0]->{userId};
             }
         }
     }
-    function apiRequest($method, $path, $data)
+    function sendApiRequest($method, $path, $data)
     {
         $url = API_URL . $path;
         if (strtoupper($method) == "GET") {
