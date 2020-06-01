@@ -7,8 +7,7 @@ DEFINE(API_URL, 'https://api.websitetoolbox.com/v1/api');
 DEFINE(COOKIEPATH, $base_path);
 DEFINE(COOKIE_DOMAIN, $base_url);
 /** * Implements hook_menu for backend settings page().Create "configuration link for custom module" in administartor */
-function WebsiteToolbox_menu()
-{
+function WebsiteToolbox_menu(){
     $items                                        = array();
     $items['admin/config/setting/websitetoolbox'] = array(
         'title' => t('Configuration of Website Toolbox Forum'),
