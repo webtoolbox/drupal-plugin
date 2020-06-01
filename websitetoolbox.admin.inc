@@ -1,5 +1,5 @@
 <?php
-namespace websiteToolboxSettings {
+namespace WebsiteToolboxSettings {
     /*create module admin configuration form*/
     function adminConfigPageLayout(){
         $form                   = array();
