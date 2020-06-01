@@ -1,5 +1,5 @@
 <?php
-namespace forumSSOLogin {
+namespace forumSSOActivity {
     function getForumAuthtoken($user, $type)
     {
         if ($type == 'login') {
@@ -47,73 +47,12 @@ namespace forumSSOLogin {
             }
         }
     }
-    function setCookieOnLogin($responseArray, $rememberme)
-    {
-        $persistent = 0;
-        if ($rememberme != "") {
-            setForumCookies('loginRemember', "checked", $persistent);
-            $persistent = 1;
-        }
-        // Save authentication token into cookie for one day to use into SSO logout.
-        if (isset($responseArray['authtoken'])) {
-            setForumCookies('forumLogoutToken', $responseArray['authtoken'], $persistent);
-        }
-        return true;
-    }
-    function checkSession()
-    {
-        if (!session_id()) {
-            drupal_session_start();
-        }
-    }
-    
-    function resetCookieOnLogout()
-    {
-        unset($_COOKIE['forumLogoutToken']);
-        setcookie('forumLogoutToken', 0, time() - 3600, $base_path);
-        unset($_COOKIE['forumLoginUserid']);
-        setcookie('forumLoginUserid', '', time() - 3600, $base_path);
-        unset($_COOKIE['loginRemember']);
-        setcookie('loginRemember', '', time() - 3600, $base_path);
-    }
-    
     function saveAuthToken($authtoken, $access_token, $forumUserid)
     {
         checkSession();
         $_SESSION['forumLoginAuthToken'] = $authtoken;
         setForumCookies('forumLoginUserid', $forumUserid, 0);
     }
-    
-    function setForumCookies($cname, $cvalue, $persistent)
-    {
-        if ($persistent == 1) {
-            $expiration = (int) time() + (86400 * 365);
-        } else {
-            $expiration = 0;
-        }
-        setcookie($cname, $cvalue, $forumBaseCookieOptions);
-        // Pass param in setcookie function as a array if php version is 7.3 or above, to overcome the waring return on wordpress website.
-        if (PHP_VERSION_ID < 70300) {
-            if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
-                setcookie($cname, $cvalue, $expiration, COOKIEPATH . " ; SameSite=None; Secure;", COOKIE_DOMAIN);
-            } else {
-                setcookie($cname, $cvalue, $expiration, COOKIEPATH, COOKIE_DOMAIN);
-            }
-        } else {
-            $forumBaseCookieOptions = [
-                'expires' => $expiration,
-                'path' => COOKIEPATH,
-                'domain' => COOKIE_DOMAIN,
-                'httponly' => true,
-            ];
-            if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
-                $forumBaseCookieOptions['secure']   = true;
-                $forumBaseCookieOptions['samesite'] = 'None';
-            }
-        }
-    }
-} //namespace forumLogin Closed
-namespace forumLogout {
     function printImageTagLogout(&$data, $elements)
     {
         $forumUrl = variable_get('forum_url');
@@ -130,24 +69,7 @@ namespace forumLogout {
         }
         return $data;
     }
-    function resetCookieOnLogout()
-    {
-        unset($_COOKIE['forumLogoutToken']);
-        setcookie('forumLogoutToken', 0, time() - 3600, $base_path);
-        unset($_COOKIE['forumLoginUserid']);
-        setcookie('forumLoginUserid', '', time() - 3600, $base_path);
-        unset($_COOKIE['loginRemember']);
-        setcookie('loginRemember', '', time() - 3600, $base_path);
-    }
-    function unsetLoginSession()
-    {
-        unset($_SESSION['forumLoginAuthToken']);
-    }
-    
-}
-
-namespace forumApiRequest {
-    function getUserid($userEmail)
+function getUserid($userEmail)
     {
         if ($userEmail) {
             $data     = array(
@@ -181,6 +103,67 @@ namespace forumApiRequest {
         $response = curl_exec($curl);
         curl_close($curl);
         return json_decode($response);
+    }
+
+    function setCookieOnLogin($responseArray, $rememberme)
+    {
+        $persistent = 0;
+        if ($rememberme != "") {
+            setForumCookies('loginRemember', "checked", $persistent);
+            $persistent = 1;
+        }
+        // Save authentication token into cookie for one day to use into SSO logout.
+        if (isset($responseArray['authtoken'])) {
+            setForumCookies('forumLogoutToken', $responseArray['authtoken'], $persistent);
+        }
+        return true;
+    }
+    function checkSession()
+    {
+        if (!session_id()) {
+            drupal_session_start();
+        }
+    }
+    
+    function resetCookieOnLogout()
+    {
+        setcookie('forumLogoutToken', 0, time() - 3600, $base_path);
+        setcookie('forumLoginUserid', '', time() - 3600, $base_path);
+        setcookie('loginRemember', '', time() - 3600, $base_path);
+    }
+    
+    function setForumCookies($cname, $cvalue, $persistent)
+    {
+        if ($persistent == 1) {
+            $expiration = (int) time() + (86400 * 365);
+        } else {
+            $expiration = 0;
+        }
+        setcookie($cname, $cvalue, $forumBaseCookieOptions);
+        // Pass param in setcookie function as a array if php version is 7.3 or above, to overcome the waring return on wordpress website.
+        if (PHP_VERSION_ID < 70300) {
+            if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
+                setcookie($cname, $cvalue, $expiration, COOKIEPATH . " ; SameSite=None; Secure;", COOKIE_DOMAIN);
+            } else {
+                setcookie($cname, $cvalue, $expiration, COOKIEPATH, COOKIE_DOMAIN);
+            }
+        } else {
+            $forumBaseCookieOptions = [
+                'expires' => $expiration,
+                'path' => COOKIEPATH,
+                'domain' => COOKIE_DOMAIN,
+                'httponly' => true,
+            ];
+            if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
+                $forumBaseCookieOptions['secure']   = true;
+                $forumBaseCookieOptions['samesite'] = 'None';
+            }
+        }
+    }
+
+    function unsetLoginSession()
+    {
+        unset($_SESSION['forumLoginAuthToken']);
     }
 }
 

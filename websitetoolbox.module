@@ -3,7 +3,7 @@ global $base_url;
 global $base_path;
 include("websitetoolbox.include.inc");
 DEFINE(WTB_SETTINGS_URL, 'https://www.websitetoolbox.com/tool/members/mb/settings');
-DEFINE(API_URL, 'https://api.websitetoolbox.com/dev/api');
+DEFINE(API_URL, 'https://api.websitetoolbox.com/v1/api');
 DEFINE(COOKIEPATH, $base_path);
 DEFINE(COOKIE_DOMAIN, $base_url);
 /** * Implements hook_menu for backend settings page().Create "configuration link for custom module" in administartor */
@@ -58,7 +58,7 @@ if (user_is_logged_in() && $checkIfEmbedded != 1) {
 /*drupal hook to show forum after user logged in. Append embedded forum url with authtoken*/
 function WebsiteToolbox_page_alter(&$page)
 {
-    $page['#post_render'][] = 'forumLogout\printImageTagLogout';
+    $page['#post_render'][] = 'forumSSOActivity\printImageTagLogout';
 }
 function WebsiteToolbox_node_view_alter(&$page)
 {
@@ -89,10 +89,10 @@ function WebsiteToolbox_node_view_alter(&$page)
 function WebsiteToolbox_user_login(&$edit, $account)
 {
     global $user;
-    forumSSOLogin\checkSession();
-    $getAuthDetails = forumSSOLogin\getForumAuthtoken($user, "login");
-    forumSSOLogin\setCookieOnLogin($getAuthDetails, "");
-    forumSSOLogin\saveAuthToken($getAuthDetails['authtoken'], $getAuthDetails['access_token'], $getAuthDetails['forumUserid']);
+    forumSSOActivity\checkSession();
+    $getAuthDetails = forumSSOActivity\getForumAuthtoken($user, "login");
+    forumSSOActivity\setCookieOnLogin($getAuthDetails, "");
+    forumSSOActivity\saveAuthToken($getAuthDetails['authtoken'], $getAuthDetails['access_token'], $getAuthDetails['forumUserid']);
     drupal_static_reset();
     drupal_flush_all_caches();
 }
@@ -120,7 +120,7 @@ function WebsiteToolbox_user_insert(&$edit, $account, $category)
     // Fields array.
     $forumsApiKey = variable_get('forum_api_key');
     $forumUrl     = variable_get('forum_url');
-    $URL          = $forumUrl . "/register/create_account/?";
+    $URL          = $forumUrl . "/register/create_account/";
     $data         = array(
         'apikey' => $forumsApiKey,
         'member' => $username,
@@ -139,10 +139,10 @@ function WebsiteToolbox_user_insert(&$edit, $account, $category)
         drupal_set_message($result->error);
         die();
     }
-    forumSSOLogin\checkSession();
-    $getAuthDetails = forumSSOLogin\getForumAuthtoken($userData, "register");
-    forumSSOLogin\setCookieOnLogin($getAuthDetails, "");
-    forumSSOLogin\saveAuthToken($getAuthDetails['authtoken'], $getAuthDetails['access_token'], $getAuthDetails['forumUserid']);
+    forumSSOActivity\checkSession();
+    $getAuthDetails = forumSSOActivity\getForumAuthtoken($userData, "register");
+    forumSSOActivity\setCookieOnLogin($getAuthDetails, "");
+    forumSSOActivity\saveAuthToken($getAuthDetails['authtoken'], $getAuthDetails['access_token'], $getAuthDetails['forumUserid']);
     drupal_static_reset();
     drupal_flush_all_caches();
 }
@@ -173,7 +173,7 @@ function WebsiteToolbox_user_update(&$edit, $account, $category)
         $avatar         = $user->picture;
         $author         = user_load($account->uid);
     }
-    $userId     = forumApiRequest\getUserid($emailToVerify);
+    $userId     = forumSSOActivity\getUserid($emailToVerify);
     $author     = user_load($account->uid);
     $avatar_url = file_create_url($author->picture->uri);
     // Update user data on the forum.
@@ -185,7 +185,7 @@ function WebsiteToolbox_user_update(&$edit, $account, $category)
             "externalUserid" => $externalUserid,
             "name" => $userName
         );
-        forumApiRequest\apiRequest('POST', "/users/$userId", $data);
+        forumSSOActivity\apiRequest('POST', "/users/$userId", $data);
     }
 }
 function WebsiteToolbox_user_delete($account)

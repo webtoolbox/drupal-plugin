@@ -1,4 +1,5 @@
-<?php
+<?php /*submit username and password for forum configuation */
+    /*get authtoken, save authtoken, create cookies after user logged in*/
 namespace forumAdminConfigeSettingPage {
     /*create module admin configuration form*/
     function adminConfigPageLayout()
@@ -96,7 +97,7 @@ namespace forumAdminConfigeSettingPage {
     
     function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption)
     {
-        $result = loginToForum($forumUsername, $forumPassword, $forumEmbeddedOption);
+        $result = getForumDetails($forumUsername, $forumPassword, $forumEmbeddedOption);
         if ($result) {
             $response = json_decode($result->data);
             if ($result->code != 200 || $response->{'errorMessage'}) {
@@ -139,9 +140,8 @@ namespace forumAdminConfigeSettingPage {
         }
     }
     
-    /*submit username and password for forum configuation */
-    /*get authtoken, save authtoken, create cookies after user logged in*/
-    function loginToForum($forumUsername, $forumPassword, $forumEmbeddedOption)
+    
+    function getForumDetails($forumUsername, $forumPassword, $forumEmbeddedOption)
     {
         global $base_url;
         $data             = array(
