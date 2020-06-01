@@ -1,5 +1,6 @@
-<?php /*submit username and password for forum configuation */
-    /*get authtoken, save authtoken, create cookies after user logged in*/
+<?php
+/*submit username and password for forum configuation */
+/*get authtoken, save authtoken, create cookies after user logged in*/
 namespace forumAdminConfigeSettingPage {
     /*create module admin configuration form*/
     function adminConfigPageLayout()
@@ -140,7 +141,7 @@ namespace forumAdminConfigeSettingPage {
         }
     }
     
-    
+    /*get forum username, password, API key */
     function getForumDetails($forumUsername, $forumPassword, $forumEmbeddedOption)
     {
         global $base_url;
@@ -193,7 +194,7 @@ namespace forumAdminConfigeSettingPage {
             exit();
         }
     }
-    
+    /*If forum embedded if checked, save forum details in database*/
     function createEmbeddedForum($response, $forumEmbeddedOption)
     {
         $nodeResult = checkForumExist();
@@ -283,6 +284,12 @@ namespace forumAdminConfigeSettingPage {
         cache_clear_all('*', 'cache_menu', TRUE);
         
     }
+    /* check if forum details already exist. If forum already configured*/
+    function checkForumExist(){
+        $nodeResult = (new EntityFieldQuery())->entityCondition('entity_type', 'node')->propertyCondition('title', 'Forum')->execute();
+        return $nodeResult;
+    }
+    /*Update forum url and login/logout url on forum server configuration*/
     function updateForumData($forumUsername, $forumAPI, $embedUrl = "")
     {
         global $base_url;
@@ -308,6 +315,7 @@ namespace forumAdminConfigeSettingPage {
             die();
         }
     }
+    
     /*create url if embedded is disabled*/
     function createForumMenuUrl($response)
     {

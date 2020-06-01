@@ -69,7 +69,7 @@ namespace forumSSOActivity {
         }
         return $data;
     }
-function getUserid($userEmail)
+    function getUserid($userEmail)
     {
         if ($userEmail) {
             $data     = array(
@@ -104,7 +104,7 @@ function getUserid($userEmail)
         curl_close($curl);
         return json_decode($response);
     }
-
+    
     function setCookieOnLogin($responseArray, $rememberme)
     {
         $persistent = 0;
@@ -148,7 +148,7 @@ function getUserid($userEmail)
                 setcookie($cname, $cvalue, $expiration, COOKIEPATH, COOKIE_DOMAIN);
             }
         } else {
-            $forumBaseCookieOptions = [
+             $forumBaseCookieOptions = [
                 'expires' => $expiration,
                 'path' => COOKIEPATH,
                 'domain' => COOKIE_DOMAIN,
@@ -160,7 +160,7 @@ function getUserid($userEmail)
             }
         }
     }
-
+    
     function unsetLoginSession()
     {
         unset($_SESSION['forumLoginAuthToken']);

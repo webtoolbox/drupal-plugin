@@ -2,8 +2,8 @@
 global $base_url;
 global $base_path;
 include("websitetoolbox.include.inc");
-DEFINE(WTB_SETTINGS_URL, 'https://www.websitetoolbox.com/tool/members/mb/settings');
-DEFINE(API_URL, 'https://api.websitetoolbox.com/v1/api');
+DEFINE(WTB_SETTINGS_URL, 'https://beta.websitetoolbox.com/tool/members/mb/settings');
+DEFINE(API_URL, 'https://api.websitetoolbox.com/dev/api');
 DEFINE(COOKIEPATH, $base_path);
 DEFINE(COOKIE_DOMAIN, $base_url);
 /** * Implements hook_menu for backend settings page().Create "configuration link for custom module" in administartor */
@@ -96,10 +96,7 @@ function WebsiteToolbox_user_login(&$edit, $account)
     drupal_static_reset();
     drupal_flush_all_caches();
 }
-function checkForumExist(){
-    $nodeResult = (new EntityFieldQuery())->entityCondition('entity_type', 'node')->propertyCondition('title', 'Forum')->execute();
-    return $nodeResult;
-}
+
 function WebsiteToolbox_user_insert(&$edit, $account, $category)
 {
     $username = $_POST['name'];
