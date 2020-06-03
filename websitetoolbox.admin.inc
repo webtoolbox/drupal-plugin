@@ -146,9 +146,9 @@ function getForumDetails($forumUsername, $forumPassword, $forumEmbeddedOption){
         'action' => 'checkPluginLogin',
         'username' => $forumUsername,
         'password' => $forumPassword,
-        'login_page_url' => $base_url . "/user",
-        'logout_page_url' => $base_url . "/user/logout",
-        'registration_url' => $base_url . "/user/register"
+        'login_page_url' => $base_url . "/?q=user",
+        'logout_page_url' => $base_url . "/?q = user/logout",
+        'registration_url' => $base_url . "/?q=user/register"
     );
     $options          = array(
         'type' => 'json',
@@ -177,7 +177,7 @@ function getForumDetails($forumUsername, $forumPassword, $forumEmbeddedOption){
                     $menu_link = $menu[$i]['link_path'];
                 }
             }
-            updateForumData($forumUsername, $forumApiKey, $base_url . "/Forum");
+            updateForumData($forumUsername, $forumApiKey, $base_url . "/?q=".$menu_link);
         } else {
             #Remove embed code and set it as a link if "embed" option is disabled.            
             createForumMenuUrl($response);
@@ -291,9 +291,9 @@ function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
         'forumUsername' => $forumUsername,
         'forumApikey' => $forumAPI,
         'embed_page_url' => $embedUrl,
-        'login_page_url' => $base_url . "/user",
-        'logout_page_url' => $base_url . "/user/logout",
-        'registration_url' => $base_url . "/user/register"
+        'login_page_url' => $base_url . "/?q=user/register",
+        'logout_page_url' => $base_url . "/?q=user/logout",
+        'registration_url' => $base_url . "/?q=user/register"
     );
     $options = array(
         'type' => 'json',
