@@ -1,7 +1,7 @@
 <?php
 include("websitetoolbox.include.inc");
-const WT_SETTINGS_URL = 'https://www.websitetoolbox.com/tool/members/mb/settings';
-const WT_API_URL = 'https://api.websitetoolbox.com/v1/api';
+const WT_SETTINGS_URL = 'https://beta.websitetoolbox.com/tool/members/mb/settings';
+const WT_API_URL = 'https://api.websitetoolbox.com/dev/api';
 /** * Implements hook_menu for backend settings page().Create "configuration link for custom module" in administartor */
 function WebsiteToolbox_menu(){
     $items                                        = array();
@@ -46,33 +46,35 @@ if (user_is_logged_in() && $checkIfEmbedded != 1) {
         }
     }
 }
-/*drupal hook to show forum after user logged in. Append embedded forum url with authtoken*/
-function WebsiteToolbox_page_alter(&$page){
-    $page['#post_render'][] = 'WebsiteToolboxSSO\printImageTagLogout';
-}
-function WebsiteToolbox_node_view_alter(&$page){
-    $forumsApiKey = variable_get('forum_api_key');
-    $forumUrl     = variable_get('forum_url');
-    $content      = $page['body']['#object']->body['und'][0]['value'];
-    if (preg_match('#^https?://#', variable_get('forum_url'))) {
-        $forumUrl = variable_get('forum_url');
-    } else {
-        $forumUrl = "http://" . variable_get('forum_url');
+if (user_is_logged_in() && $checkIfEmbedded == 1) {
+    /*drupal hook to show forum after user logged in. Append embedded forum url with authtoken*/
+    function WebsiteToolbox_page_alter(&$page){
+        $page['#post_render'][] = 'WebsiteToolboxSSO\printImageTagLogout';
     }
-    $forumEmbedUrl = preg_replace('#^https?:#i', '', $forumUrl);
-    $auth_token    = '';
-    if (isset($_COOKIE['forumLogoutToken'])) {
-        $auth_token = "?authtoken=" . $_COOKIE['forumLogoutToken'];
-    } elseif (isset($_SESSION['forumLoginAuthToken'])) {
-        $auth_token = "?authtoken=" . $_SESSION['forumLoginAuthToken'];
+    function WebsiteToolbox_node_view_alter(&$page){
+        $forumsApiKey = variable_get('forum_api_key');
+        $forumUrl     = variable_get('forum_url');
+        $content      = $page['body']['#object']->body['und'][0]['value'];
+        if (preg_match('#^https?://#', variable_get('forum_url'))) {
+            $forumUrl = variable_get('forum_url');
+        } else {
+            $forumUrl = "http://" . variable_get('forum_url');
+        }
+        $forumEmbedUrl = preg_replace('#^https?:#i', '', $forumUrl);
+        $auth_token    = '';
+        if (isset($_COOKIE['forumLogoutToken'])) {
+            $auth_token = "?authtoken=" . $_COOKIE['forumLogoutToken'];
+        } elseif (isset($_SESSION['forumLoginAuthToken'])) {
+            $auth_token = "?authtoken=" . $_SESSION['forumLoginAuthToken'];
+        }
+        if (isset($_COOKIE['forumLogoutToken']) && isset($_COOKIE['loginRemember'])) {
+            $auth_token .= "&remember=" . $_COOKIE['loginRemember'];
+        }
+        $embedURL                   = $forumEmbedUrl . '/js/mb/embed.js';
+        $newURL                     = $forumEmbedUrl . '/js/mb/embed.js' . $auth_token;
+        $content_changed            = str_replace($embedURL, $newURL, $content);
+        $page['body'][0]['#markup'] = $content_changed;
     }
-    if (isset($_COOKIE['forumLogoutToken']) && isset($_COOKIE['loginRemember'])) {
-        $auth_token .= "&remember=" . $_COOKIE['loginRemember'];
-    }
-    $embedURL                   = $forumEmbedUrl . '/js/mb/embed.js';
-    $newURL                     = $forumEmbedUrl . '/js/mb/embed.js' . $auth_token;
-    $content_changed            = str_replace($embedURL, $newURL, $content);
-    $page['body'][0]['#markup'] = $content_changed;
 }
 
 function WebsiteToolbox_user_login(&$edit, $account){
