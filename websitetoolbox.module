@@ -1,7 +1,7 @@
 <?php
 include("websitetoolbox.include.inc");
-const WT_SETTINGS_URL = 'https://beta.websitetoolbox.com/tool/members/mb/settings';
-const WT_API_URL = 'https://api.websitetoolbox.com/dev/api';
+const WT_SETTINGS_URL = 'https://www.websitetoolbox.com/tool/members/mb/settings';
+const WT_API_URL = 'https://api.websitetoolbox.com/v1/api';
 /** * Implements hook_menu for backend settings page().Create "configuration link for custom module" in administartor */
 function WebsiteToolbox_menu(){
     $items                                        = array();
@@ -46,36 +46,37 @@ if (user_is_logged_in() && $checkIfEmbedded != 1) {
         }
     }
 }
-if (user_is_logged_in() && $checkIfEmbedded == 1) {
+ 
     /*drupal hook to show forum after user logged in. Append embedded forum url with authtoken*/
     function WebsiteToolbox_page_alter(&$page){
         $page['#post_render'][] = 'WebsiteToolboxSSO\printImageTagLogout';
     }
-    function WebsiteToolbox_node_view_alter(&$page){
-        $forumsApiKey = variable_get('forum_api_key');
-        $forumUrl     = variable_get('forum_url');
-        $content      = $page['body']['#object']->body['und'][0]['value'];
-        if (preg_match('#^https?://#', variable_get('forum_url'))) {
-            $forumUrl = variable_get('forum_url');
-        } else {
-            $forumUrl = "http://" . variable_get('forum_url');
+    if (user_is_logged_in() && $checkIfEmbedded == 1) { 
+        function WebsiteToolbox_node_view_alter(&$page){
+            $forumsApiKey = variable_get('forum_api_key');
+            $forumUrl     = variable_get('forum_url');
+            $content      = $page['body']['#object']->body['und'][0]['value'];
+            if (preg_match('#^https?://#', variable_get('forum_url'))) {
+                $forumUrl = variable_get('forum_url');
+            } else {
+                $forumUrl = "http://" . variable_get('forum_url');
+            }
+            $forumEmbedUrl = preg_replace('#^https?:#i', '', $forumUrl);
+            $auth_token    = '';
+            if (isset($_COOKIE['forumLogoutToken'])) {
+                $auth_token = "?authtoken=" . $_COOKIE['forumLogoutToken'];
+            } elseif (isset($_SESSION['forumLoginAuthToken'])) {
+                $auth_token = "?authtoken=" . $_SESSION['forumLoginAuthToken'];
+            }
+            if (isset($_COOKIE['forumLogoutToken']) && isset($_COOKIE['loginRemember'])) {
+                $auth_token .= "&remember=" . $_COOKIE['loginRemember'];
+            }
+            $embedURL                   = $forumEmbedUrl . '/js/mb/embed.js';
+            $newURL                     = $forumEmbedUrl . '/js/mb/embed.js' . $auth_token;
+            $content_changed            = str_replace($embedURL, $newURL, $content);
+            $page['body'][0]['#markup'] = $content_changed;
         }
-        $forumEmbedUrl = preg_replace('#^https?:#i', '', $forumUrl);
-        $auth_token    = '';
-        if (isset($_COOKIE['forumLogoutToken'])) {
-            $auth_token = "?authtoken=" . $_COOKIE['forumLogoutToken'];
-        } elseif (isset($_SESSION['forumLoginAuthToken'])) {
-            $auth_token = "?authtoken=" . $_SESSION['forumLoginAuthToken'];
-        }
-        if (isset($_COOKIE['forumLogoutToken']) && isset($_COOKIE['loginRemember'])) {
-            $auth_token .= "&remember=" . $_COOKIE['loginRemember'];
-        }
-        $embedURL                   = $forumEmbedUrl . '/js/mb/embed.js';
-        $newURL                     = $forumEmbedUrl . '/js/mb/embed.js' . $auth_token;
-        $content_changed            = str_replace($embedURL, $newURL, $content);
-        $page['body'][0]['#markup'] = $content_changed;
     }
-}
 
 function WebsiteToolbox_user_login(&$edit, $account){
     global $user;
@@ -136,7 +137,7 @@ function WebsiteToolbox_user_presave(&$edit, $account, $category){
     $_SESSION['oldUserEmail'] = $account->mail;
 }
 function WebsiteToolbox_user_update(&$edit, $account, $category){
-    global $user;
+    global $user; 
     $forumsApiKey   = variable_get('forum_api_key');
     $forumUrl       = variable_get('forum_url');
     $LoggedinUserid = $user->uid;
@@ -144,17 +145,17 @@ function WebsiteToolbox_user_update(&$edit, $account, $category){
     $emailToVerify  = $_SESSION['oldUserEmail'];
     // change updated userid if admin update other user profile else get update userid from the cookie.
     // WTB logged-in userid store in the cookie when user logged-in on the WordPress website.
-    if ($LoggedinUserid != $dProfileUserid) {
+    if ($LoggedinUserid != $dProfileUserid) { 
         $externalUserid = $edit['uid'];
         $email          = $edit['mail'];
         $userName       = $edit['name'];
         $avatar         = $edit['picture'];
         $author         = user_load($edit['uid']);
     } else {
-        $externalUserid = $account->uid;
-        $email          = $user->mail;
-        $userName       = $user->name;
-        $avatar         = $user->picture;
+        $externalUserid = $account->uid; 
+        $email          = $edit['mail'];
+        $userName       = $edit['name'];
+        $avatar         = $edit['picture'];
         $author         = user_load($account->uid);
     }
     $userId     = WebsiteToolboxSSO\getUserid($emailToVerify);
@@ -169,6 +170,7 @@ function WebsiteToolbox_user_update(&$edit, $account, $category){
             "externalUserid" => $externalUserid,
             "name" => $userName
         );
+        
         WebsiteToolboxSSO\sendApiRequest('POST', "/users/$userId", $data);
     }
 }

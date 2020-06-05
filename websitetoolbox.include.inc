@@ -72,8 +72,9 @@ function getUserid($userEmail){
             "email" => $userEmail
         );
         $response = sendApiRequest('GET', "/users/", $data);
-        if ($response->{data}[0]->{userId}) {
-            return $response->{data}[0]->{userId};
+        if ($response->{'data'}[0]->{'userId'}) {
+            echo $response->{'data'}[0]->{'userId'};    
+            return $response->{'data'}[0]->{'userId'};
         }
     }
 }
@@ -119,9 +120,13 @@ function checkSession(){
 }
 
 function resetCookieOnLogout(){
+    global $base_path;
     setcookie('forumLogoutToken', 0, time() - 3600, $base_path);
+    unset($_COOKIE['forumLogoutToken']);
     setcookie('forumLoginUserid', '', time() - 3600, $base_path);
+    unset($_COOKIE['forumLoginUserid']);
     setcookie('loginRemember', '', time() - 3600, $base_path);
+    unset($_COOKIE['loginRemember']);
 }
 
 function setForumCookies($cname, $cvalue, $persistent){

@@ -33,6 +33,11 @@ function adminConfigPageLayout(){
             '#maxlength' => 250,
             '#required' => TRUE
         );
+        $html_hidden            = "<input type='hidden' name='embeddedValue' value='" . variable_get('forum_embedded_option') . "'>";
+        $form['display_html'][] = array(
+            '#type' => 'markup',
+            '#markup' => $html_hidden
+        );
         
     } else {
         $html1                  = "<div><b>Website Toolbox Username :  </b>" . variable_get('forum_username') . "&nbsp;&nbsp;&nbsp;    
@@ -57,11 +62,7 @@ function adminConfigPageLayout(){
             '#required' => FALSE
         );
     }
-    $html_hidden            = "<input type='hidden' name='embeddedValue' value='" . variable_get('forum_embedded_option') . "'>";
-    $form['display_html'][] = array(
-        '#type' => 'markup',
-        '#markup' => $html_hidden
-    );
+    
     $form['#submit'][]      = 'websiteToolboxSettings\adminConfigPageSubmit';
     return system_settings_form($form);
 }
