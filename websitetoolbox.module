@@ -1,0 +1,204 @@
+<?php
+include("websitetoolbox.include.inc");
+const WT_SETTINGS_URL = 'https://www.websitetoolbox.com/tool/members/mb/settings';
+const WT_API_URL = 'https://api.websitetoolbox.com/v1/api';
+/** * Implements hook_menu for backend settings page().Create "configuration link for custom module" in administartor */
+function WebsiteToolbox_menu(){
+    $items                                        = array();
+    $items['admin/config/setting/websitetoolbox'] = array(
+        'title' => t('Configuration of Website Toolbox Forum'),
+        'description' => t('Configure the Website Toolbox module'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array(
+            'websiteToolboxSettings\adminConfigPageLayout'
+        ),
+        'access arguments' => array(
+            'administer Website Toolbox Forum settings'
+        ),
+        'file' => 'websitetoolbox.admin.inc',
+        'type' => MENU_NORMAL_ITEM
+    );
+    return $items;
+}
+/** * Implements hook_permission(). Implements hook_menu for backend settings page().Create "permission link for custom module in administartor" */
+function WebsiteToolbox_permission(){
+    return array(
+        'administer WebsiteToolbox settings' => array(
+            'title' => t('Administer Website Toolbox configurations'),
+            'restrict access' => true
+        )
+    );
+}
+/*check if embedded is enable/disable in configuration*/
+$checkIfEmbedded = variable_get('forum_embedded_option');
+
+/*append forum link with authtoken after user logged in Case embedded disbale*/
+if (user_is_logged_in() && $checkIfEmbedded != 1) {
+    function WebsiteToolbox_url_outbound_alter(&$path, &$options, $originalPath)
+    {
+        if (isset($options['title']) && ($options['title'] == 'Forum')) {
+            if (isset($_COOKIE['forumLogoutToken'])) {
+                $cookie = $_COOKIE['forumLogoutToken'];
+            } elseif (isset($_SESSION['forumLoginAuthToken'])) {
+                $cookie = $_SESSION['forumLoginAuthToken'];
+            }
+            $options['query']['authtoken'] = $cookie;
+        }
+    }
+}
+ 
+    /*drupal hook to show forum after user logged in. Append embedded forum url with authtoken*/
+    function WebsiteToolbox_page_alter(&$page){
+        $page['#post_render'][] = 'WebsiteToolboxSSO\printImageTagLogout';
+    }
+    if (user_is_logged_in() && $checkIfEmbedded == 1) { 
+        function WebsiteToolbox_node_view_alter(&$page){
+            $forumsApiKey = variable_get('forum_api_key');
+            $forumUrl     = variable_get('forum_url');
+            $content      = $page['body']['#object']->body['und'][0]['value'];
+            if (preg_match('#^https?://#', variable_get('forum_url'))) {
+                $forumUrl = variable_get('forum_url');
+            } else {
+                $forumUrl = "http://" . variable_get('forum_url');
+            }
+            $forumEmbedUrl = preg_replace('#^https?:#i', '', $forumUrl);
+            $auth_token    = '';
+            if (isset($_COOKIE['forumLogoutToken'])) {
+                $auth_token = "?authtoken=" . $_COOKIE['forumLogoutToken'];
+            } elseif (isset($_SESSION['forumLoginAuthToken'])) {
+                $auth_token = "?authtoken=" . $_SESSION['forumLoginAuthToken'];
+            }
+            if (isset($_COOKIE['forumLogoutToken']) && isset($_COOKIE['loginRemember'])) {
+                $auth_token .= "&remember=" . $_COOKIE['loginRemember'];
+            }
+            $embedURL                   = $forumEmbedUrl . '/js/mb/embed.js';
+            $newURL                     = $forumEmbedUrl . '/js/mb/embed.js' . $auth_token;
+            $content_changed            = str_replace($embedURL, $newURL, $content);
+            $page['body'][0]['#markup'] = $content_changed;
+        }
+    }
+
+function WebsiteToolbox_user_login(&$edit, $account){
+    global $user;
+    WebsiteToolboxSSO\checkSession();
+    $getAuthDetails = WebsiteToolboxSSO\getForumAuthtoken($user, "login");
+    WebsiteToolboxSSO\setCookieOnLogin($getAuthDetails, "");
+    WebsiteToolboxSSO\saveAuthToken($getAuthDetails['authtoken'], $getAuthDetails['forumUserid']);
+    drupal_static_reset();
+    drupal_flush_all_caches();
+}
+
+function WebsiteToolbox_user_insert(&$edit, $account, $category){
+    $username = $_POST['name'];
+    $email    = $_POST['mail'];
+    $pass     = $_POST['pass'];
+    $userId   = $account->uid;
+    $userData = (object) array(
+        'name' => $username,
+        'mail' => $email,
+        'pass' => $pass,
+        'externalUserid' => $userId
+    );
+    if (isset($_POST['pass1']) && $_POST['pass1'] != "") {
+        $password = $_POST['pass1'];
+    } else {
+        $password = '';
+    }
+    // Fields array.
+    $forumsApiKey = variable_get('forum_api_key');
+    $forumUrl     = variable_get('forum_url');
+    $URL          = $forumUrl . "/register/create_account/";
+    $data         = array(
+        'apikey' => $forumsApiKey,
+        'member' => $username,
+        'email' => $email,
+        'externalUserid' => $userId
+    );
+    $options      = array(
+        'type' => 'json',
+        'method' => 'POST',
+        'data' => drupal_http_build_query($data),
+        'timeout' => 15
+    );
+    
+    $result = drupal_http_request($URL, $options);
+    if (!$result) {
+        drupal_set_message($result->error);
+        die();
+    }
+    WebsiteToolboxSSO\checkSession();
+    $getAuthDetails = WebsiteToolboxSSO\getForumAuthtoken($userData, "register");
+    WebsiteToolboxSSO\setCookieOnLogin($getAuthDetails, "");
+    WebsiteToolboxSSO\saveAuthToken($getAuthDetails['authtoken'], $getAuthDetails['forumUserid']);
+    drupal_static_reset();
+    drupal_flush_all_caches();
+}
+function WebsiteToolbox_user_presave(&$edit, $account, $category){
+    $_SESSION['oldUserEmail'] = $account->mail;
+}
+function WebsiteToolbox_user_update(&$edit, $account, $category){
+    global $user; 
+    $forumsApiKey   = variable_get('forum_api_key');
+    $forumUrl       = variable_get('forum_url');
+    $LoggedinUserid = $user->uid;
+    $dProfileUserid = $edit['uid'];
+    $emailToVerify  = $_SESSION['oldUserEmail'];
+    // change updated userid if admin update other user profile else get update userid from the cookie.
+    // WTB logged-in userid store in the cookie when user logged-in on the WordPress website.
+    if ($LoggedinUserid != $dProfileUserid) { 
+        $externalUserid = $edit['uid'];
+        $email          = $edit['mail'];
+        $userName       = $edit['name'];
+        $avatar         = $edit['picture'];
+        $author         = user_load($edit['uid']);
+    } else {
+        $externalUserid = $account->uid; 
+        $email          = $edit['mail'];
+        $userName       = $edit['name'];
+        $avatar         = $edit['picture'];
+        $author         = user_load($account->uid);
+    }
+    $userId     = WebsiteToolboxSSO\getUserid($emailToVerify);
+    $author     = user_load($account->uid);
+    $avatar_url = file_create_url($author->picture->uri);
+    // Update user data on the forum.
+    if ($userId) {
+        $data = array(
+            "email" => $email,
+            "avatarUrl" => $avatar_url,
+            "username" => $userName,
+            "externalUserid" => $externalUserid,
+            "name" => $userName
+        );
+        
+        WebsiteToolboxSSO\sendApiRequest('POST', "/users/$userId", $data);
+    }
+}
+function WebsiteToolbox_user_delete($account){
+    $username     = $account->name;
+    $forumsApiKey = variable_get('forum_api_key');
+    $forumUrl     = variable_get('forum_url');
+    $URL          = $forumUrl . "/register";
+    $data         = array(
+        'apikey' => $forumsApiKey,
+        'massaction' => 'decline_mem',
+        'usernames' => $username
+    );
+    $options      = array(
+        'type' => 'json',
+        'method' => 'POST',
+        'data' => drupal_http_build_query($data),
+        'timeout' => 15
+    );
+    
+    $result = drupal_http_request($URL, $options);
+    if (!$result) {
+        drupal_set_message($result->error);
+        die();
+    }
+}
+/* check if forum details already exist. If forum already configured*/
+function checkForumExist(){
+    $nodeResult = (new EntityFieldQuery())->entityCondition('entity_type', 'node')->propertyCondition('title', 'Forum')->execute();
+    return $nodeResult;
+}

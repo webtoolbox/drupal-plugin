@@ -1,0 +1,49 @@
+<?php 
+function WebsiteToolbox_uninstall() {
+	$wtbForumUrl = variable_get('forums_url');
+	$nodeResult = (new EntityFieldQuery())
+        ->entityCondition('entity_type', 'node')
+        ->propertyCondition('title', 'Forum')
+        ->execute();
+	$node = node_load(array_shift(array_keys($nodeResult['node'])));
+	node_delete($node->nid);
+	$menu = menu_load_links('main-menu');
+	for($i=0;$i<count($menu);$i++){
+		if($menu[$i]['link_title'] == 'Forum'){
+			menu_link_delete(NULL,$menu[$i]['link_path']);
+		}
+	}
+	$num_deleted = db_delete('url_alias')
+    ->condition('alias', "Forum")
+    ->execute();   
+	variable_del('forum_api_key'); 
+	variable_del('forum_url'); 
+	variable_del('forum_username'); 
+	variable_del('forum_password'); 
+	variable_del('forum_embedded_option'); 
+
+}
+function  WebsiteToolbox_disable(){
+	$wtbForumUrl = variable_get('forum_url');
+	$nodeResult = (new EntityFieldQuery())
+	->entityCondition('entity_type', 'node')
+	->propertyCondition('title', 'Forum')
+	->execute();
+	$node = node_load(array_shift(array_keys($nodeResult['node'])));
+	node_delete($node->nid);
+	$menu = menu_load_links('main-menu');
+	for($i=0;$i<count($menu);$i++){
+		if($menu[$i]['link_title'] == 'Forum'){
+			menu_link_delete(NULL,$menu[$i]['link_path']);
+		}
+	}
+	$num_deleted = db_delete('url_alias')
+	->condition('alias', "Forum")
+	->execute();
+	variable_del('forum_api_key'); 
+	variable_del('forum_url'); 
+	variable_del('forum_username'); 
+	variable_del('forum_password'); 
+	variable_del('forum_embedded_option');
+}
+?>
