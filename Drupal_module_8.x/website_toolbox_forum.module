@@ -38,7 +38,7 @@ function website_toolbox_forum_node_view(array &$build) {
       }
     }
 }
-function website_toolbox_forum_user_login($account){
+function website_toolbox_forum_user_login(){
   $userId = \Drupal::currentUser()->id();
   $email = \Drupal::currentUser()->getEmail();
   $username = \Drupal::currentUser()->getUsername();
@@ -70,7 +70,6 @@ function website_toolbox_forum_user_insert($account){
     $request = \Drupal::httpClient()->post($URL, ['verify' => true,'form_params' => ['apikey' => $forumsApiKey,'member' => $username,'email' => $email,'externalUserid' => $userId,]])->getBody()->getContents();      
     if (!$request) {
         drupal_set_message($result->error);
-        die();
     }
     $getAuthDetails = Drupal\website_toolbox_forum\getForumAuthtoken($userData, "register");
     Drupal\website_toolbox_forum\setCookieOnLogin($getAuthDetails, "");

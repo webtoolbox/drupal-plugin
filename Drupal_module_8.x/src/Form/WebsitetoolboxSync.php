@@ -4,7 +4,7 @@
  * Contains \Drupal\website_toolbox_forum\Form\WebsitetoolboxforumSync.
  */
 namespace Drupal\website_toolbox_forum\Form;
-const WT_SETTINGS_URL = 'https://beta.websitetoolbox.com/tool/members/mb/settings';
+const WT_SETTINGS_URL = 'https://www.websitetoolbox.com/tool/members/mb/settings';
 use Drupal\Core\Config\ConfigImporterException;
 use Drupal\Core\Config\ConfigImporter;
 use Drupal\Core\Config\TypedConfigManagerInterface;
@@ -37,7 +37,7 @@ class WebsitetoolboxSync extends FormBase {
             '#type' => 'markup',
             '#markup' => $html
         );
-        if (isset($_SESSION['flag']) && ($_SESSION['flag'] == 1)) {
+        if (isset($_SESSION['flag'])) {
             $html_error             = '<div class="messages error">Please provide correct username and password</div>';
             $form['display_html'][] = array(
                 '#type' => 'markup',
@@ -133,16 +133,9 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
     global $base_url;
     $request = \Drupal::httpClient()->post(WT_SETTINGS_URL, [
     'verify' => true,
-    'form_params' => ['action' => 'checkPluginLogin',
-                    'username' => $forumUsername,
-                    'password' => $forumPassword,
-                    'login_page_url' => $base_url . "/?q=user",
-                    'logout_page_url' => $base_url . "/?q = user/logout",
-                    'registration_url' => $base_url . "/?q=user/register",],
-                    'headers' => [
-                    'Content-type' => 'application/json',
-    ],
-    ])->getBody()->getContents(); 
+    'form_params' => ['action' => 'checkPluginLogin','username' => $forumUsername,'password' => $forumPassword,'login_page_url' => $base_url . "/?q=user",
+                    'logout_page_url' => $base_url . "/?q = user/logout",'registration_url' => $base_url . "/?q=user/register",],'headers' => [
+                    'Content-type' => 'application/json',],])->getBody()->getContents(); 
     $response = json_decode($request);
     $forumUrl = $response->forumAddress; 
     $forumApiKey = $response->forumApiKey; 

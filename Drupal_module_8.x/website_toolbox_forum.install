@@ -12,13 +12,10 @@ function website_toolbox_forum_uninstall() {
 			menu_link_delete(NULL,$menu[$i]['link_path']);
 		}
 	}
-	$num_deleted = db_delete('url_alias')
-    ->condition('alias', "Forum")
-    ->execute();   
+	$num_deleted = db_delete('url_alias')->condition('alias', "Forum")->execute();   
 	variable_del('forum_api_key'); 
 	variable_del('forum_url'); 
 	variable_del('forum_username'); 
 	variable_del('forum_password'); 
 	variable_del('forum_embedded_option'); 
-
- }?>
+}?>

@@ -1,6 +1,6 @@
 <?php
 namespace Drupal\website_toolbox_forum;
-const WT_API_URL = 'https://api.websitetoolbox.com/dev/api';
+const WT_API_URL = 'https://api.websitetoolbox.com/v1/api';
 function getForumAuthtoken($user, $type){ 
     $forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key');
     $forumUrl     = \Drupal::config('node.settings')->get('forum_url');
