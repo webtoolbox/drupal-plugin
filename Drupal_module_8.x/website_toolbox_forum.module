@@ -3,7 +3,7 @@
 function website_toolbox_forum_node_view(array &$build) {
 	$forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key');
 	$forumUrl     = \Drupal::config('node.settings')->get('forum_url');
-    $content      =  $build['body'][0]['#text'];
+  $content      =  $build['body'][0]['#text'];
 	if (preg_match('#^https?://#', \Drupal::config('node.settings')->get('forum_url'))) {
 	    $forumUrl = \Drupal::config('node.settings')->get('forum_url');
 	} else {
