@@ -26,7 +26,7 @@ function website_toolbox_forum_node_view(array &$build) {
 }
 //alter forum link if not embedded before page render//
  $checkIfEmbedded = \Drupal::config('node.settings')->get('forum_embedded_option'); 
- if($checkIfEmbedded != 1 && isset($_COOKIE['forumLogoutToken'])){  
+ if($checkIfEmbedded != 1 && isset($_COOKIE['forumLogoutToken'])){   
    function  website_toolbox_forum_link_alter(&$variables){   
       if($variables['text'] == 'Forum'){  
          if (isset($_COOKIE['forumLogoutToken'])) { 
@@ -34,7 +34,7 @@ function website_toolbox_forum_node_view(array &$build) {
             } elseif (isset($_SESSION['forumLoginAuthToken'])) {
                 $cookie = $_SESSION['forumLoginAuthToken'];
             }
-         $variables['options']['query']['authtoken']  = $cookie ;
+      $variables['options']['query']['authtoken']  = $cookie ;
       }
     }
 }
@@ -105,18 +105,11 @@ function website_toolbox_forum_user_delete( Drupal\Core\Entity\EntityInterface $
     $forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key'); ;
     $forumUrl     = \Drupal::config('node.settings')->get('forum_url'); 
     $URL          = $forumUrl . "/register";    
-    $request = \Drupal::httpClient()->post($URL, [
-    'verify' => true,
-    'form_params' => ['type' => 'json',
-    'apikey' => $forumsApiKey,
-    'massaction' => 'decline_mem',
-    'usernames' => $username,]
-               
-    ])->getBody()->getContents();  
+    $request = \Drupal::httpClient()->post($URL, ['verify' => true,'form_params' => ['type' => 'json','apikey' => $forumsApiKey,'massaction' => 'decline_mem','usernames' => $username,]])->getBody()->getContents();  
 }
- function website_toolbox_forum_page_bottom(array &$page_bottom) {
-     $userId = \Drupal::currentUser()->id();
-     $forumUrl = \Drupal::config('node.settings')->get('forum_url');
+function website_toolbox_forum_page_bottom(array &$page_bottom) {
+    $userId = \Drupal::currentUser()->id();
+    $forumUrl = \Drupal::config('node.settings')->get('forum_url');
     if ($userId == 0 && (isset($_COOKIE['forumLogoutToken']) || isset($_SESSION['forumLoginAuthToken']))) { 
         $logout_auth_url = $forumUrl . "/register/logout?authtoken=" . $_COOKIE['forumLogoutToken'];
         $logout_auth_url = preg_replace('#^https?:#i', '', $logout_auth_url);
