@@ -17,7 +17,7 @@ class WebsitetoolboxSync extends FormBase {
     public function getFormId() {
         return 'config_admin_import_form';
     }
-    public function buildForm(array $form, FormStateInterface $form_state) {    
+    public function buildForm(array $form, FormStateInterface $form_state) {
         $form                   = array();
         $html                   = '<h2>Forums by Website Toolbox</h2><br /><b>Please log in to your Website Toolbox account.</b><p>Not a Website Toolbox Forum owner? <a href="https://www.websitetoolbox.com/wordpress" target="_blank">Create a Forum Now!</a></p><p>Please <a href="https://www.websitetoolbox.com/contact?subject=WordPress+Plugin+Setup+Help" target="_blank">Contact Customer Support</a> if you need help getting set up.</p>';
         $form['display_html'][] = array(
@@ -30,7 +30,7 @@ class WebsitetoolboxSync extends FormBase {
                 '#type' => 'markup',
                 '#markup' => $html_error
             );
-            
+
         }
         if ((\Drupal::config('node.settings')->get('forum_username') == '') || (isset($_GET['forumSettingOption']) && $_GET['forumSettingOption'] == 1)) {
         $form['forum_username'] = array(
@@ -54,7 +54,7 @@ class WebsitetoolboxSync extends FormBase {
             '#default_value' => \Drupal::config('node.settings')->get('forum_embedded_option', ""),
        );
     } else {
-        $html1                  = "<div><b>Website Toolbox Username :  </b>" . \Drupal::config('node.settings')->get('forum_username') . "&nbsp;&nbsp;&nbsp;    
+        $html1                  = "<div><b>Website Toolbox Username :  </b>" . \Drupal::config('node.settings')->get('forum_username') . "&nbsp;&nbsp;&nbsp;
             <a href='?forumSettingOption=1'>Change</a></div>";
         $form['display_html'][] = array(
             '#type' => 'markup',
@@ -75,12 +75,12 @@ class WebsitetoolboxSync extends FormBase {
             '#maxlength' => 250,
             '#required' => FALSE
         );
-    }    
+    }
     $form['actions']['submit'] = array(
       '#type' => 'submit',
       '#value' => $this->t('Submit'),
     );
-    return $form;       
+    return $form;
   }
   public function submitForm(array &$form, FormStateInterface $form_state) {
     if(isset($_POST['forum_username'])){
@@ -103,16 +103,16 @@ class WebsitetoolboxSync extends FormBase {
         }
     } else {
         $forumEmbeddedOption = $_POST['forum_hidden'];
-    }     
+    }
     \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_embedded_option', $forumEmbeddedOption)->save();
     checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption);  
     $urlRedirect      = explode("?",$_SERVER['HTTP_REFERER']);
     header("location:" . $urlRedirect[0]);
-    exit();      
+    exit();
   }
 
 }
-function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){ 
+function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
     global $base_url;
     $request = \Drupal::httpClient()->post(WT_SETTINGS_URL, [
     'verify' => true,
@@ -124,10 +124,10 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
                     'registration_url' => $base_url . "/?q=user/register",],
                     'headers' => [
                     'Content-type' => 'application/json',
-    ],])->getBody()->getContents(); 
+    ],])->getBody()->getContents();
     $response = json_decode($request);
-    $forumUrl = $response->forumAddress; 
-    $forumApiKey = $response->forumApiKey; 
+    $forumUrl = $response->forumAddress;
+    $forumApiKey = $response->forumApiKey;
     \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_api_key', $forumApiKey)->save();
     \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_url', $forumUrl)->save();
      if ($forumUrl) {
@@ -148,12 +148,12 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
 function createEmbeddedForum($response, $forumEmbeddedOption){
     $forumUrl   = $response->forumAddress;
     $query = \Drupal::entityQuery('node')->condition('title', 'Forum');
-    $nids = $query->execute();     
+    $nids = $query->execute();
     if(empty($nids)){
         $node = Node::create(array('type' => 'page','title' => 'Forum','langcode' => 'en','uid' => '1','status' => 1));
         $node->body = array('format' => 'full_html', 'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>');
         $node->save();
-        $nodeId = $node->id(); 
+        $nodeId = $node->id();
         $menu_link = MenuLinkContent::create([
         'title' => Forum,
         'link' => ['uri' => 'internal:/node/' . $nodeId],
@@ -163,21 +163,21 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
       $menu_link->save();
       $path = \Drupal::service('path.alias_storage')->save("/node/" . $nodeId, "/forum", 'und');
       drupal_static_reset();
-      drupal_flush_all_caches();  
+      drupal_flush_all_caches();
     }else{
         $getNodeArray = array_keys($nids);
-        $getNodeID = array_shift($getNodeArray); 
+        $getNodeID = array_shift($getNodeArray);
         $existNode = Node::load($getNodeID);
         $existNode->body = array('format' => 'full_html', 'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>');
         $existNode->save();
         db_update('menu_link_content_data')->fields(array('link__uri' => 'internal:/node/' . $getNodeID))->condition('title', 'Forum', '=')->execute();
         drupal_static_reset();
-        drupal_flush_all_caches();  
+        drupal_flush_all_caches();
     }
 }
     /*Update forum url and login/logout url on forum server configuration*/
     function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
-         global $base_url;    
+         global $base_url;
          $request = \Drupal::httpClient()->post(WT_SETTINGS_URL, [
          'verify' => true,
          'form_params' => ['action' => 'modifySSOURLs',
@@ -186,14 +186,14 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
                         'embed_page_url' => $embedUrl,
                         'login_page_url' => $base_url . "/?q=user/register",
                         'logout_page_url' => $base_url . "/?q=user/logout",
-                        'registration_url' => $base_url . "/?q=user/register",]                     
-         ])->getBody()->getContents();    
+                        'registration_url' => $base_url . "/?q=user/register",]
+         ])->getBody()->getContents();
     }
     /*create url if embedded is disabled*/
     function createForumMenuUrl($response){
-        $forumUrl = $response->forumAddress;    
+        $forumUrl = $response->forumAddress;
         $menuExist = \Drupal::service('path.alias_storage')->aliasExists('/Forum', 'und');
-        db_update('menu_link_content_data')->fields(array('link__uri' => $forumUrl))->condition('title', 'Forum', '=')->execute(); 
+        db_update('menu_link_content_data')->fields(array('link__uri' => $forumUrl))->condition('title', 'Forum', '=')->execute();
         drupal_static_reset();
-        drupal_flush_all_caches();      
+        drupal_flush_all_caches();
     }
