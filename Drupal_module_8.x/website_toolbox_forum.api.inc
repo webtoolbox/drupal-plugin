@@ -20,7 +20,7 @@ function getForumAuthtoken($user, $type){
         //Check if http/https request could not return any error then filter JSON from response
         if ($request) {
             $response = json_decode($request);
-            if ($response && $response->authtoken != "") {
+             if ($response && $response->authtoken != "") {
                 $authtoken     = $response->authtoken;
                 $forumUserid   = $response->userid;
                 $responseArray = array(
@@ -28,15 +28,15 @@ function getForumAuthtoken($user, $type){
                     'forumUserid' => $forumUserid
                 );
                 return $responseArray;
-            }
-        }
-    }
-}
-function saveAuthToken($authtoken, $forumUserid){
+             }
+          }
+      }
+  }
+  function saveAuthToken($authtoken, $forumUserid){
     $_SESSION['forumLoginAuthToken'] = $authtoken;
     setForumCookies('forumLoginUserid', $forumUserid, 0);
-}
-function getUserid($userEmail){
+  }
+  function getUserid($userEmail){
     if ($userEmail) {
         $url = WT_API_URL . "/users/";
         $request = \Drupal::httpClient()->get($url, ['verify' => true,
@@ -50,8 +50,8 @@ function getUserid($userEmail){
             return $response->data[0]->userId;
         }       
     }
-}
-function updateUserDetails ($userDetails,$url,$method){
+ }
+ function updateUserDetails ($userDetails,$url,$method){
    $requestUrl = WT_API_URL.$url;
    $curl = curl_init();
     curl_setopt($curl, CURLOPT_URL, $requestUrl);
@@ -69,8 +69,8 @@ function updateUserDetails ($userDetails,$url,$method){
     $response = curl_exec($curl); 
     curl_close($curl);
     return json_decode($response);
-}
-function setCookieOnLogin($responseArray, $rememberme){
+ }
+ function setCookieOnLogin($responseArray, $rememberme){
     $persistent = 0;
     if ($rememberme != "") {
         setForumCookies('loginRemember', "checked", $persistent);
@@ -81,17 +81,16 @@ function setCookieOnLogin($responseArray, $rememberme){
         setForumCookies('forumLogoutToken', $responseArray['authtoken'], $persistent);
     }
     return true;
-}
-function resetCookieOnLogout(){
+ }
+ function resetCookieOnLogout(){
     setcookie('forumLogoutToken', 0, time() - 3600, "/");
     unset($_COOKIE['forumLogoutToken']);
     setcookie('forumLoginUserid', '', time() - 3600, "/");
     unset($_COOKIE['forumLoginUserid']);
     setcookie('loginRemember', '', time() - 3600, "/");
     unset($_COOKIE['loginRemember']);
-}
-
-function setForumCookies($cname, $cvalue, $persistent){
+ }
+ function setForumCookies($cname, $cvalue, $persistent){
     if ($persistent == 1) {
         $expiration = (int) time() + (86400 * 365);
     } else {
@@ -103,8 +102,8 @@ function setForumCookies($cname, $cvalue, $persistent){
     } else {
         setcookie($cname, $cvalue, $expiration,'/');
     }
-}
-function unsetLoginSession(){
+ }
+ function unsetLoginSession(){
     unset($_SESSION['forumLoginAuthToken']);
-}
+ }
 ?>

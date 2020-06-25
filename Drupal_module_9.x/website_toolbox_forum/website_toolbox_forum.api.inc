@@ -1,7 +1,7 @@
 <?php
 namespace Drupal\website_toolbox_forum;
-const WT_API_URL = 'https://api.websitetoolbox.com/dev/api';
-function getForumAuthtoken($user, $type){ 
+const WT_API_URL = 'https://api.websitetoolbox.com/v1/api';
+function getForumAuthtoken($user, $type){
     $forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key');
     $forumUrl     = \Drupal::config('node.settings')->get('forum_url');
     if ($forumsApiKey) {
@@ -9,7 +9,7 @@ function getForumAuthtoken($user, $type){
         $email    = $user->mail;
         $userId   = $user->externalUserid;
         $URL      = $forumUrl . "/register/setauthtoken";
-        $request = \Drupal::httpClient()->post($URL, ['verify' => true,'form_params' => ['type' => 'json','apikey' => $forumsApiKey,'user' => $username,'email' =>$email,'externalUserid' => $userId,]])->getBody()->getContents();        
+        $request = \Drupal::httpClient()->post($URL, ['verify' => true,'form_params' => ['type' => 'json','apikey' => $forumsApiKey,'user' => $username,'email' =>$email,'externalUserid' => $userId,]])->getBody()->getContents();
         //Check if http/https request could not return any error then filter JSON from response
         if ($request) {
             $response = json_decode($request);
@@ -30,49 +30,37 @@ function getForumAuthtoken($user, $type){
     setForumCookies('forumLoginUserid', $forumUserid, 0);
   }
   function getUserid($userEmail){
-    $method = "GET";
     if ($userEmail) {
         $userEmailDetail = array('email' => $userEmail);
-        $url = "https://api.websitetoolbox.com/dev/api/users/?email=".urlencode($userEmail);
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, $url);
-        curl_setopt($curl, CURLOPT_HTTPHEADER, array(
-            "x-api-key: " . \Drupal::config('node.settings')->get('forum_api_key'),
-            'Content-Type: application/json'
-        ));
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-        if (strtoupper($method) == "POST") {
-            curl_setopt($curl, CURLOPT_POST, true);
-            curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
-        } else if (strtoupper($method) == "GET") {
-            curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        $url = WT_API_URL."/users/";
+        $response = sendApiRequest('GET', "/users/", $userEmailDetail);
+        if ($response->{'data'}[0]->{'userId'}) {
+            return $response->{'data'}[0]->{'userId'};
         }
-        $request = curl_exec($curl);
-        $response = json_decode($request);
-        if ($response->data[0]->userId) {
-            return $response->data[0]->userId;
-        } 
     }
  }
- function updateUserDetails ($userDetails,$url,$method){
-   $requestUrl = WT_API_URL.$url;
-   $curl = curl_init();
+  function sendApiRequest($method, $requestPath, $requestData){
+    $requestUrl = WT_API_URL . $requestPath;
+     if (strtoupper($method) == "GET") {
+        $requestUrl = sprintf("%s?%s", $requestUrl, http_build_query($requestData));
+    }
+    $curl = curl_init();
     curl_setopt($curl, CURLOPT_URL, $requestUrl);
     curl_setopt($curl, CURLOPT_HTTPHEADER, array(
-        "x-api-key: " . \Drupal::config('node.settings')->get('forum_api_key'),
+        "x-api-key: " .  \Drupal::config('node.settings')->get('forum_api_key'),
         'Content-Type: application/json'
     ));
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
     if (strtoupper($method) == "POST") {
         curl_setopt($curl, CURLOPT_POST, true);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($userDetails));
+        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($requestData));
     } else if (strtoupper($method) == "GET") {
         curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
     }
-    $response = curl_exec($curl); 
+    $response = curl_exec($curl);
     curl_close($curl);
     return json_decode($response);
- }
+}
  function setCookieOnLogin($responseArray, $rememberme){
     $persistent = 0;
     if ($rememberme != "") {
@@ -109,4 +97,5 @@ function getForumAuthtoken($user, $type){
  function unsetLoginSession(){
     unset($_SESSION['forumLoginAuthToken']);
  }
+
 ?>

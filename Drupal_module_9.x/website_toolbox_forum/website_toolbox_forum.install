@@ -1,12 +1,12 @@
 <?php 
 function website_toolbox_forum_uninstall() {
-	$wtbForumUrl = \Drupal::config('node.settings')->get('forum_url');
-	$query = \Drupal::entityQuery('node')->condition('title', 'Forum');
-    $nids = $query->execute();  
-	$getNodeArray = array_keys($nids);
-    $getNodeID = array_shift($getNodeArray);
+	$wtbForumUrl	= \Drupal::config('node.settings')->get('forum_url');
+	$query 			= \Drupal::entityQuery('node')->condition('title', 'Forum');
+    $nids 			= $query->execute();  
+	$getNodeArray 	= array_keys($nids);
+    $getNodeID 		= array_shift($getNodeArray);
 	node_delete($getNodeID);
-	$menu = menu_load_links('main-menu');
+	$menu 			= menu_load_links('main-menu');
 	for($i=0;$i<count($menu);$i++){
 		if($menu[$i]['link_title'] == 'Forum'){
 			menu_link_delete(NULL,$menu[$i]['link_path']);

@@ -5,22 +5,9 @@
  */
 namespace Drupal\website_toolbox_forum\Form;
 const WT_SETTINGS_URL = 'https://www.websitetoolbox.com/tool/members/mb/settings';
-use Drupal\Core\Config\ConfigImporterException;
-use Drupal\Core\Config\ConfigImporter;
-use Drupal\Core\Config\TypedConfigManagerInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\Core\Extension\ModuleInstallerInterface;
-use Drupal\Core\Extension\ThemeHandlerInterface;
-use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Form\FormBase;
-use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Lock\LockBackendInterface;
-use Drupal\Core\Config\StorageComparer;
-use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\node\Entity\Node;
 use Drupal\menu_link_content\Entity\MenuLinkContent;
 /**
@@ -37,7 +24,7 @@ class WebsitetoolboxSync extends FormBase {
             '#type' => 'markup',
             '#markup' => $html
         );
-        if (isset($_SESSION['flag'])) {
+        if (isset($_SESSION['flag']) && ($_SESSION['flag'] == 1)) {
             $html_error             = '<div class="messages error">Please provide correct username and password</div>';
             $form['display_html'][] = array(
                 '#type' => 'markup',
@@ -66,8 +53,6 @@ class WebsitetoolboxSync extends FormBase {
             '#type' => 'hidden',
             '#default_value' => \Drupal::config('node.settings')->get('forum_embedded_option', ""),
        );
-        
-        
     } else {
         $html1                  = "<div><b>Website Toolbox Username :  </b>" . \Drupal::config('node.settings')->get('forum_username') . "&nbsp;&nbsp;&nbsp;    
             <a href='?forumSettingOption=1'>Change</a></div>";
@@ -95,8 +80,7 @@ class WebsitetoolboxSync extends FormBase {
       '#type' => 'submit',
       '#value' => $this->t('Submit'),
     );
-    return $form;
-       
+    return $form;       
   }
   public function submitForm(array &$form, FormStateInterface $form_state) {
     if(isset($_POST['forum_username'])){
@@ -124,8 +108,7 @@ class WebsitetoolboxSync extends FormBase {
     checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption);  
     $urlRedirect      = explode("?",$_SERVER['HTTP_REFERER']);
     header("location:" . $urlRedirect[0]);
-    exit();
-      
+    exit();      
   }
 
 }
@@ -133,9 +116,15 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
     global $base_url;
     $request = \Drupal::httpClient()->post(WT_SETTINGS_URL, [
     'verify' => true,
-    'form_params' => ['action' => 'checkPluginLogin','username' => $forumUsername,'password' => $forumPassword,'login_page_url' => $base_url . "/?q=user",
-                    'logout_page_url' => $base_url . "/?q = user/logout",'registration_url' => $base_url . "/?q=user/register",],'headers' => [
-                    'Content-type' => 'application/json',],])->getBody()->getContents(); 
+    'form_params' => ['action' => 'checkPluginLogin',
+                    'username' => $forumUsername,
+                    'password' => $forumPassword,
+                    'login_page_url' => $base_url . "/?q=user",
+                    'logout_page_url' => $base_url . "/?q = user/logout",
+                    'registration_url' => $base_url . "/?q=user/register",],
+                    'headers' => [
+                    'Content-type' => 'application/json',
+    ],])->getBody()->getContents(); 
     $response = json_decode($request);
     $forumUrl = $response->forumAddress; 
     $forumApiKey = $response->forumApiKey; 
@@ -186,26 +175,25 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
         drupal_flush_all_caches();  
     }
 }
-/*Update forum url and login/logout url on forum server configuration*/
-function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
-     global $base_url;    
-     $request = \Drupal::httpClient()->post(WT_SETTINGS_URL, [
-     'verify' => true,
-     'form_params' => ['action' => 'modifySSOURLs',
-                    'forumUsername' => $forumUsername,
-                    'forumApikey' => $forumAPI,
-                    'embed_page_url' => $embedUrl,
-                    'login_page_url' => $base_url . "/?q=user/register",
-                    'logout_page_url' => $base_url . "/?q=user/logout",
-                    'registration_url' => $base_url . "/?q=user/register",]
-                     
-     ])->getBody()->getContents();    
-}
-/*create url if embedded is disabled*/
-function createForumMenuUrl($response){
-    $forumUrl = $response->forumAddress;    
-    $menuExist = \Drupal::service('path.alias_storage')->aliasExists('/Forum', 'und');
-    db_update('menu_link_content_data')->fields(array('link__uri' => $forumUrl))->condition('title', 'Forum', '=')->execute(); 
-    drupal_static_reset();
-    drupal_flush_all_caches();      
-}
+    /*Update forum url and login/logout url on forum server configuration*/
+    function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
+         global $base_url;    
+         $request = \Drupal::httpClient()->post(WT_SETTINGS_URL, [
+         'verify' => true,
+         'form_params' => ['action' => 'modifySSOURLs',
+                        'forumUsername' => $forumUsername,
+                        'forumApikey' => $forumAPI,
+                        'embed_page_url' => $embedUrl,
+                        'login_page_url' => $base_url . "/?q=user/register",
+                        'logout_page_url' => $base_url . "/?q=user/logout",
+                        'registration_url' => $base_url . "/?q=user/register",]                     
+         ])->getBody()->getContents();    
+    }
+    /*create url if embedded is disabled*/
+    function createForumMenuUrl($response){
+        $forumUrl = $response->forumAddress;    
+        $menuExist = \Drupal::service('path.alias_storage')->aliasExists('/Forum', 'und');
+        db_update('menu_link_content_data')->fields(array('link__uri' => $forumUrl))->condition('title', 'Forum', '=')->execute(); 
+        drupal_static_reset();
+        drupal_flush_all_caches();      
+    }

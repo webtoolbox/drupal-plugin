@@ -4,7 +4,7 @@
  * Contains \Drupal\website_toolbox_forum\Form\WebsitetoolboxforumSync.
  */
 namespace Drupal\website_toolbox_forum\Form;
-const WT_SETTINGS_URL = 'https://beta.websitetoolbox.com/tool/members/mb/settings';
+const WT_SETTINGS_URL = 'https://www.websitetoolbox.com/tool/members/mb/settings';
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;

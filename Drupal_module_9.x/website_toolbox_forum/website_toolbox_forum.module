@@ -80,8 +80,8 @@ function website_toolbox_forum_user_insert($account){
 }
 function website_toolbox_forum_user_presave( Drupal\Core\Entity\EntityInterface $entity){
     if($entity->original){
-      $user = \Drupal\user\Entity\User::load($entity->id());
-      $_SESSION['oldUserEmail'] = $user->getEmail();
+        $user = \Drupal\user\Entity\User::load($entity->id());
+        $_SESSION['oldUserEmail'] = $user->getEmail();
     }
 }
 function website_toolbox_forum_user_update(Drupal\Core\Entity\EntityInterface $entity){
@@ -90,15 +90,15 @@ function website_toolbox_forum_user_update(Drupal\Core\Entity\EntityInterface $e
   $userName = $entity->getAccountName();
   $externalUserid = $entity->id();
   $user = \Drupal\user\Entity\User::load($entity->id());
-  $avatar_url = file_create_url($user->user_picture->entity->getFileUri());
+  $avatarUrl = file_create_url($user->user_picture->entity->getFileUri());
   $email = $entity->getEmail();
   $userDetails = array("email" => $email,
-          "avatarUrl" => $avatar_url,
+          "avatarUrl" => $avatarUrl,
           "username" => $userName,
           "externalUserid" => $externalUserid,
           "name" => $userName);
   $url =  "/users/$userId";
-  Drupal\website_toolbox_forum\updateUserDetails($userDetails,$url,'POST');  
+  Drupal\website_toolbox_forum\sendApiRequest($userDetails,$url,'POST');  
 }
 function website_toolbox_forum_user_delete( Drupal\Core\Entity\EntityInterface $entity){
     $username     = $entity->getAccountName();
@@ -106,20 +106,20 @@ function website_toolbox_forum_user_delete( Drupal\Core\Entity\EntityInterface $
     $forumUrl     = \Drupal::config('node.settings')->get('forum_url'); 
     $URL          = $forumUrl . "/register";    
     $request = \Drupal::httpClient()->post($URL, [
-    'verify' => true,
-    'form_params' => ['type' => 'json',
-    'apikey' => $forumsApiKey,
-    'massaction' => 'decline_mem',
-    'usernames' => $username,]               
-    ])->getBody()->getContents();        
+                                                'verify' => true,
+                                                'form_params' => ['type' => 'json',
+                                                'apikey' => $forumsApiKey,
+                                                'massaction' => 'decline_mem',
+                                                'usernames' => $username,]               
+                                                ])->getBody()->getContents();        
 }
  function website_toolbox_forum_page_bottom(array &$page_bottom) {
     $userId = \Drupal::currentUser()->id();
     $forumUrl = \Drupal::config('node.settings')->get('forum_url');
     if ($userId == 0 && (isset($_COOKIE['forumLogoutToken']) || isset($_SESSION['forumLoginAuthToken']))) { 
-        $logout_auth_url = $forumUrl . "/register/logout?authtoken=" . $_COOKIE['forumLogoutToken'];
-        $logout_auth_url = preg_replace('#^https?:#i', '', $logout_auth_url);
-        $page_bottom['contentImg'] = ['#markup' => '<img src="' . $logout_auth_url . '" border="0" width="0" height="0" alt="">'];
+        $logoutAuthUrl = $forumUrl . "/register/logout?authtoken=" . $_COOKIE['forumLogoutToken'];
+        $logoutAuthUrl = preg_replace('#^https?:#i', '', $logoutAuthUrl);
+        $page_bottom['contentImg'] = ['#markup' => '<img src="' . $logoutAuthUrl . '" border="0" width="0" height="0" alt="">'];
         Drupal\website_toolbox_forum\unsetLoginSession();
         Drupal\website_toolbox_forum\resetCookieOnLogout();
     }   
