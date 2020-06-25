@@ -25,10 +25,10 @@ class WebsitetoolboxSync extends FormBase {
             '#markup' => $html
         );
         if (isset($_SESSION['flag']) && ($_SESSION['flag'] == 1)) {
-            $html_error             = '<div class="messages error">Please provide correct username and password</div>';
+            $htmlError             = '<div class="messages error">Please provide correct username and password</div>';
             $form['display_html'][] = array(
                 '#type' => 'markup',
-                '#markup' => $html_error
+                '#markup' => $htmlError
             );
 
         }
@@ -154,13 +154,13 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
         $node->body = array('format' => 'full_html', 'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>');
         $node->save();
         $nodeId = $node->id();
-        $menu_link = MenuLinkContent::create([
+        $menuLink = MenuLinkContent::create([
         'title' => Forum,
         'link' => ['uri' => 'internal:/node/' . $nodeId],
         'menu_name' => 'main',
         'expanded' => TRUE,
       ]);
-      $menu_link->save();
+      $menuLink->save();
       $path = \Drupal::service('path.alias_storage')->save("/node/" . $nodeId, "/forum", 'und');
       drupal_static_reset();
       drupal_flush_all_caches();
