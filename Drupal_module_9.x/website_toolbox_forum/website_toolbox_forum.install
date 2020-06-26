@@ -2,9 +2,9 @@
 function website_toolbox_forum_uninstall() {
 	$wtbForumUrl	= \Drupal::config('node.settings')->get('forum_url');
 	$query 			= \Drupal::entityQuery('node')->condition('title', 'Forum');
-    $nids 			= $query->execute();  
-	$getNodeArray 	= array_keys($nids);
-    $getNodeID 		= array_shift($getNodeArray);
+    	$nids 			= $query->execute();  
+	$getNodeArray 		= array_keys($nids);
+    	$getNodeID 		= array_shift($getNodeArray);
 	node_delete($getNodeID);
 	$menu 			= menu_load_links('main-menu');
 	for($i=0;$i<count($menu);$i++){
@@ -13,8 +13,8 @@ function website_toolbox_forum_uninstall() {
 		}
 	}
 	$num_deleted = db_delete('url_alias')
-    ->condition('alias', "Forum")
-    ->execute();   
+   	->condition('alias', "Forum")
+    	->execute();   
 	variable_del('forum_api_key'); 
 	variable_del('forum_url'); 
 	variable_del('forum_username'); 
