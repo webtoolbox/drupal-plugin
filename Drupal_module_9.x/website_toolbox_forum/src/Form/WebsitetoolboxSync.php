@@ -156,13 +156,13 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
             $num_updated = $connection->update('menu_link_content_data')->fields(['link__uri' => 'internal:/node/' . $getNodeID,])->condition('title', "Forum", '=')->execute();
             $num_updated = $connection->update('menu_link_content_field_revision')->fields(['link__uri' => 'internal:/node/',])->condition('title', "Forum", '=')->execute();
         }else{
-            $menu_link = MenuLinkContent::create([
+            $menuLink = MenuLinkContent::create([
             'title' => Forum,
             'link' => ['uri' => 'internal:/node/' . $nodeId],
             'menu_name' => 'main',
             'expanded' => TRUE,
           ]);
-            $menu_link->save();
+            $menuLink->save();
         }
         $path_alias_storage = \Drupal::entityTypeManager()->getStorage('path_alias');      
         $path_alias = $path_alias_storage->create([
@@ -200,8 +200,8 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
             $num_updated = $connection->update('menu_link_content_data')->fields(['link__uri' => $forumUrl,])->condition('title', "Forum", '=')->execute();
             $num_updated = $connection->update('menu_link_content_field_revision')->fields(['link__uri' =>$forumUrl,])->condition('title',"Forum",'=')->execute();
         }else{
-            $menu_link = MenuLinkContent::create(['title' => Forum,'link' => ['uri' => $forumUrl],'menu_name' => 'main','expanded' => TRUE,]);
-            $menu_link->save();
+            $menuLink = MenuLinkContent::create(['title' => Forum,'link' => ['uri' => $forumUrl],'menu_name' => 'main','expanded' => TRUE,]);
+            $menuLink->save();
         }
         drupal_static_reset();
         drupal_flush_all_caches();      
