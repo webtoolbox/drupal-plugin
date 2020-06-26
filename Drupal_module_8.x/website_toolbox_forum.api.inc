@@ -52,8 +52,8 @@ function getForumAuthtoken($user, $type){
     }
  }
  function updateUserDetails ($userDetails,$url,$method){
-   $requestUrl = WT_API_URL.$url;
-   $curl = curl_init();
+    $requestUrl = WT_API_URL.$url;
+    $curl = curl_init();
     curl_setopt($curl, CURLOPT_URL, $requestUrl);
     curl_setopt($curl, CURLOPT_HTTPHEADER, array(
         "x-api-key: " . \Drupal::config('node.settings')->get('forum_api_key'),
