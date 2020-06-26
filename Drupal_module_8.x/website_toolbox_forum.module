@@ -34,7 +34,7 @@ function website_toolbox_forum_node_view(array &$build) {
             } elseif (isset($_SESSION['forumLoginAuthToken'])) {
                 $cookie = $_SESSION['forumLoginAuthToken'];
             }
-         $variables['options']['query']['authtoken']  = $cookie ;
+      $variables['options']['query']['authtoken']  = $cookie ;
       }
     }
 }
@@ -114,7 +114,7 @@ function website_toolbox_forum_user_delete( Drupal\Core\Entity\EntityInterface $
     'usernames' => $username,]               
     ])->getBody()->getContents();  
 }
- function website_toolbox_forum_page_bottom(array &$page_bottom) {
+function website_toolbox_forum_page_bottom(array &$page_bottom) {
     $userId = \Drupal::currentUser()->id();
     $forumUrl = \Drupal::config('node.settings')->get('forum_url');
     if ($userId == 0 && (isset($_COOKIE['forumLogoutToken']) || isset($_SESSION['forumLoginAuthToken']))) { 
