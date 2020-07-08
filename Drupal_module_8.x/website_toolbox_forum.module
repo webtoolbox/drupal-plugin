@@ -27,16 +27,16 @@ function website_toolbox_forum_node_view(array &$build) {
 //alter forum link if not embedded before page render//
  $checkIfEmbedded = \Drupal::config('node.settings')->get('forum_embedded_option'); 
  if($checkIfEmbedded != 1 && isset($_COOKIE['forumLogoutToken'])){  
-   function  website_toolbox_forum_link_alter(&$variables){   
-      if($variables['text'] == 'Forum'){  
-         if (isset($_COOKIE['forumLogoutToken'])) { 
-                $cookie = $_COOKIE['forumLogoutToken'];
-            } elseif (isset($_SESSION['forumLoginAuthToken'])) {
-                $cookie = $_SESSION['forumLoginAuthToken'];
-            }
-      $variables['options']['query']['authtoken']  = $cookie ;
-      }
-    }
+ 	function  website_toolbox_forum_link_alter(&$variables){   
+      		if($variables['text'] == 'Forum'){  
+         		if (isset($_COOKIE['forumLogoutToken'])) { 
+                		$cookie = $_COOKIE['forumLogoutToken'];
+            		} elseif (isset($_SESSION['forumLoginAuthToken'])) {
+                		$cookie = $_SESSION['forumLoginAuthToken'];
+            		}
+     			$variables['options']['query']['authtoken']  = $cookie ;
+      		}
+    	}
 }
 function website_toolbox_forum_user_login($account){
   $userId = \Drupal::currentUser()->id();
