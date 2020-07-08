@@ -63,7 +63,7 @@ function website_toolbox_forum_node_view(array &$build) {
 			'mail' => $email,
 			'pass' => $pass,
 			'externalUserid' => $userId
-		);
+		);  
 		$forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key') ;
 		$forumUrl     = \Drupal::config('node.settings')->get('forum_url');
 		$URL          = $forumUrl . "/register/create_account/";
