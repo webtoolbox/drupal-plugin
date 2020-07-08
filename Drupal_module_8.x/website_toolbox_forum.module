@@ -43,9 +43,9 @@ function website_toolbox_forum_user_login($account){
 	$email = \Drupal::currentUser()->getEmail();
 	$username = \Drupal::currentUser()->getUsername();
 	$userData = (object) array(
-		'name' => $username,
-		'mail' => $email,
-		'externalUserid' => $userId
+	'name' => $username,
+	'mail' => $email,
+	'externalUserid' => $userId
 	);
 	$getAuthDetails = Drupal\website_toolbox_forum\getForumAuthtoken($userData, "login");
 	Drupal\website_toolbox_forum\setCookieOnLogin($getAuthDetails, "");
@@ -59,10 +59,10 @@ function website_toolbox_forum_user_insert($account){
 	$pass     = $_POST['pass'];
 	$userId   = $account->uid;
 	$userData = (object) array(
-		'name' => $username,
-		'mail' => $email,
-		'pass' => $pass,
-		'externalUserid' => $userId
+	'name' => $username,
+	'mail' => $email,
+	'pass' => $pass,
+	'externalUserid' => $userId
 	);
 	$forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key') ;
 	$forumUrl     = \Drupal::config('node.settings')->get('forum_url');
