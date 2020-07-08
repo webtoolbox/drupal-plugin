@@ -117,13 +117,13 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
     $request = \Drupal::httpClient()->post(WT_SETTINGS_URL, [
     'verify' => true,
     'form_params' => ['action' => 'checkPluginLogin',
-                    'username' => $forumUsername,
-                    'password' => $forumPassword,
-                    'login_page_url' => $base_url . "/?q=user",
-                    'logout_page_url' => $base_url . "/?q = user/logout",
-                    'registration_url' => $base_url . "/?q=user/register",],
-                    'headers' => ['Content-type' => 'application/json',],])
-    ->getBody()->getContents();
+                      'username' => $forumUsername,
+                      'password' => $forumPassword,
+                      'login_page_url' => $base_url . "/?q=user",
+                      'logout_page_url' => $base_url . "/?q = user/logout",
+                      'registration_url' => $base_url . "/?q=user/register",],
+                      'headers' => ['Content-type' => 'application/json',],])
+                      ->getBody()->getContents();
     $response = json_decode($request);
     $forumUrl = $response->forumAddress;
     $forumApiKey = $response->forumApiKey;
