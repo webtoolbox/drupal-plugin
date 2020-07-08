@@ -122,9 +122,8 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
                     'login_page_url' => $base_url . "/?q=user",
                     'logout_page_url' => $base_url . "/?q = user/logout",
                     'registration_url' => $base_url . "/?q=user/register",],
-                    'headers' => [
-                    'Content-type' => 'application/json',
-    ],])->getBody()->getContents();
+                    'headers' => ['Content-type' => 'application/json',],])
+    ->getBody()->getContents();
     $response = json_decode($request);
     $forumUrl = $response->forumAddress;
     $forumApiKey = $response->forumApiKey;
@@ -180,14 +179,14 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
          global $base_url;
          $request = \Drupal::httpClient()->post(WT_SETTINGS_URL, [
          'verify' => true,
-         'form_params' => ['action' => 'modifySSOURLs',
-                        'forumUsername' => $forumUsername,
-                        'forumApikey' => $forumAPI,
-                        'embed_page_url' => $embedUrl,
-                        'login_page_url' => $base_url . "/?q=user/register",
-                        'logout_page_url' => $base_url . "/?q=user/logout",
-                        'registration_url' => $base_url . "/?q=user/register",]
-         ])->getBody()->getContents();
+         'form_params' =>  ['action' => 'modifySSOURLs',
+                           'forumUsername' => $forumUsername,
+                           'forumApikey' => $forumAPI,
+                           'embed_page_url' => $embedUrl,
+                           'login_page_url' => $base_url . "/?q=user/register",
+                           'logout_page_url' => $base_url . "/?q=user/logout",
+                           'registration_url' => $base_url . "/?q=user/register",]])
+                           ->getBody()->getContents();
     }
     /*create url if embedded is disabled*/
     function createForumMenuUrl($response){
