@@ -8,22 +8,22 @@ function website_toolbox_forum_node_view(array &$build) {
 		$forumUrl = \Drupal::config('node.settings')->get('forum_url');
 	} else {
 		$forumUrl = "http://" . \Drupal::config('node.settings')->get('forum_url');
-		}
-		$forumEmbedUrl = preg_replace('#^https?:#i', '', $forumUrl);
-		$authToken    = '';
-		if (isset($_COOKIE['forumLogoutToken'])) {
-			$authToken = "?authtoken=" . $_COOKIE['forumLogoutToken'];
-		} elseif (isset($_SESSION['forumLoginAuthToken'])) {
-			$authToken = "?authtoken=" . $_SESSION['forumLoginAuthToken'];
-		}
-		if (isset($_COOKIE['forumLogoutToken']) && isset($_COOKIE['loginRemember'])) {
-			$authToken .= "&remember=" . $_COOKIE['loginRemember'];
-		}
-		$embedURL                   = $forumEmbedUrl . '/js/mb/embed.js';
-		$newURL                     = $forumEmbedUrl . '/js/mb/embed.js' . $authToken;
-		$contentChanged            = str_replace($embedURL, $newURL, $content);
-		$build['body'][0]['#text']  = $contentChanged;
 	}
+	$forumEmbedUrl = preg_replace('#^https?:#i', '', $forumUrl);
+	$authToken    = '';
+	if (isset($_COOKIE['forumLogoutToken'])) {
+		$authToken = "?authtoken=" . $_COOKIE['forumLogoutToken'];
+	} elseif (isset($_SESSION['forumLoginAuthToken'])) {
+		$authToken = "?authtoken=" . $_SESSION['forumLoginAuthToken'];
+	}
+	if (isset($_COOKIE['forumLogoutToken']) && isset($_COOKIE['loginRemember'])) {
+		$authToken .= "&remember=" . $_COOKIE['loginRemember'];
+	}
+	$embedURL                   = $forumEmbedUrl . '/js/mb/embed.js';
+	$newURL                     = $forumEmbedUrl . '/js/mb/embed.js' . $authToken;
+	$contentChanged            = str_replace($embedURL, $newURL, $content);
+	$build['body'][0]['#text']  = $contentChanged;
+}
 	//alter forum link if not embedded before page render//
 $checkIfEmbedded = \Drupal::config('node.settings')->get('forum_embedded_option');
 if($checkIfEmbedded != 1 && isset($_COOKIE['forumLogoutToken'])){
@@ -99,7 +99,6 @@ function website_toolbox_forum_user_update(Drupal\Core\Entity\EntityInterface $e
 	"name" => $userName);
 	$url =  "/users/$userId";
 	Drupal\website_toolbox_forum\updateUserDetails($userDetails,$url,'POST');
-
 }
 function website_toolbox_forum_user_delete( Drupal\Core\Entity\EntityInterface $entity){
 	$username     = $entity->getUsername();
@@ -107,12 +106,12 @@ function website_toolbox_forum_user_delete( Drupal\Core\Entity\EntityInterface $
 	$forumUrl     = \Drupal::config('node.settings')->get('forum_url');
 	$URL          = $forumUrl . "/register";
 	$request = \Drupal::httpClient()->post($URL, [
-		'verify' => true,
-		'form_params' => ['type' => 'json',
-		'apikey' => $forumsApiKey,
-		'massaction' => 'decline_mem',
-		'usernames' => $username,]
-		])->getBody()->getContents();
+	'verify' => true,
+	'form_params' => ['type' => 'json',
+	'apikey' => $forumsApiKey,
+	'massaction' => 'decline_mem',
+	'usernames' => $username,]
+	])->getBody()->getContents();
 }
 function website_toolbox_forum_page_bottom(array &$page_bottom) {
 	$userId = \Drupal::currentUser()->id();
@@ -125,4 +124,4 @@ function website_toolbox_forum_page_bottom(array &$page_bottom) {
 		Drupal\website_toolbox_forum\resetCookieOnLogout();
 	}
 }
-		?>
+?>
