@@ -9,7 +9,14 @@ function getForumAuthtoken($user, $type){
     $email    = $user->mail;
     $userId   = $user->externalUserid;
     $URL      = $forumUrl . "/register/setauthtoken";
-    $request = \Drupal::httpClient()->post($URL, ['verify' => true,'form_params' => ['type' => 'json','apikey' => $forumsApiKey,'user' => $username,'email' =>$email,'externalUserid' => $userId,]])->getBody()->getContents();
+    $request = \Drupal::httpClient()->post($URL, [
+      'verify' => true,
+      'form_params' => ['type' => 'json',
+      'apikey' => $forumsApiKey,
+      'user' => $username,
+      'email' =>$email,
+      'externalUserid' => $userId,]
+    ])->getBody()->getContents();
     //Check if http/https request could not return any error then filter JSON from response
     if ($request) {
       $response = json_decode($request);
