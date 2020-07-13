@@ -42,13 +42,12 @@ function getForumAuthtoken($user, $type){
       $request = \Drupal::httpClient()->get($url, ['verify' => true,
       'form_params' => [ 'email' => $userEmail,],
       'headers' => ['x-api-key' =>\Drupal::config('node.settings')->get('forum_api_key'),
-      'Content-type' => 'application/json',
-    ],
-    ])->getBody()->getContents();
-    $response = json_decode($request);
-    if ($response->data[0]->userId) {
-      return $response->data[0]->userId;
-    }
+      'Content-type' => 'application/json',],
+      ])->getBody()->getContents();
+      $response = json_decode($request);
+      if ($response->data[0]->userId) {
+         return $response->data[0]->userId;
+      }
   }
 }
 function updateUserDetails ($userDetails,$url,$method){
