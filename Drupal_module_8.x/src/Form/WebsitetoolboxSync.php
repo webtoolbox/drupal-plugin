@@ -151,7 +151,8 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
   $nids = $query->execute();
   if(empty($nids)){
     $node = Node::create(array('type' => 'page','title' => 'Forum','langcode' => 'en','uid' => '1','status' => 1));
-    $node->body = array('format' => 'full_html', 'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>');
+    $node->body = array('format' => 'full_html',
+      'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>');
     $node->save();
     $nodeId = $node->id();
     $menuLink = MenuLinkContent::create([
@@ -168,14 +169,15 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
     $getNodeArray = array_keys($nids);
     $getNodeID = array_shift($getNodeArray);
     $existNode = Node::load($getNodeID);
-    $existNode->body = array('format' => 'full_html', 'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>');
+    $existNode->body = array('format' => 'full_html',
+      'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>');
     $existNode->save();
     db_update('menu_link_content_data')->fields(array('link__uri' => 'internal:/node/' . $getNodeID))->condition('title', 'Forum', '=')->execute();
     drupal_static_reset();
     drupal_flush_all_caches();
   }
 }
-    /*Update forum url and login/logout url on forum server configuration*/
+/*Update forum url and login/logout url on forum server configuration*/
 function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
   global $base_url;
   $request = \Drupal::httpClient()->post(WT_SETTINGS_URL, [
@@ -189,7 +191,7 @@ function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
     'registration_url' => $base_url . "/?q=user/register",]
     ])->getBody()->getContents();
   }
-      /*create url if embedded is disabled*/
+/*create url if embedded is disabled*/
 function createForumMenuUrl($response){
     $forumUrl = $response->forumAddress;
     $menuExist = \Drupal::service('path.alias_storage')->aliasExists('/Forum', 'und');
