@@ -98,12 +98,12 @@ class WebsitetoolboxSync extends FormBase {
       }
       if (isset($_POST['forum_embedded_option'])) {
         if ($_POST['forum_embedded_option'] == 1) {
-          $forumEmbeddedOption = 1;
+           $forumEmbeddedOption = 1;
         } else {
-          $forumEmbeddedOption = 0;
+           $forumEmbeddedOption = 0;
         }
       } else {
-        $forumEmbeddedOption = $_POST['forum_hidden'];
+         $forumEmbeddedOption = $_POST['forum_hidden'];
       }
       \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_embedded_option', $forumEmbeddedOption)->save();
       checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption);
