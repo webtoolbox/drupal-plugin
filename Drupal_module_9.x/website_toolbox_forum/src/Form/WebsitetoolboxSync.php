@@ -116,9 +116,14 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
 global $base_url;
 $request = \Drupal::httpClient()->post(WT_SETTINGS_URL, [
   'verify' => true,
-  'form_params' => ['action' => 'checkPluginLogin','username' => $forumUsername,'password' => $forumPassword,'login_page_url' => $base_url . "/?q=user",
-  'logout_page_url' => $base_url . "/?q = user/logout",'registration_url' => $base_url . "/?q=user/register",],'headers' => [
-    'Content-type' => 'application/json',],])->getBody()->getContents();
+  'form_params' => ['action' => 'checkPluginLogin',
+    'username' => $forumUsername,
+    'password' => $forumPassword,
+    'login_page_url' => $base_url . "/?q=user",
+    'logout_page_url' => $base_url . "/?q = user/logout",
+    'registration_url' => $base_url . "/?q=user/register",],
+    'headers' => ['Content-type' => 'application/json',],])
+    ->getBody()->getContents();
     $response = json_decode($request);
     $forumUrl = $response->forumAddress;
     $forumApiKey = $response->forumApiKey;
@@ -148,7 +153,8 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
   $rows       = $connection->select('menu_link_content_data', 't')->fields('t')->condition('title', 'Forum')->execute()->fetchAllAssoc('id', \PDO::FETCH_ASSOC);
   if(empty($nids)){
     $node = Node::create(array('type' => 'page','title' => 'Forum','langcode' => 'en','uid' => '1','status' => 1));
-    $node->body = array('format' => 'full_html', 'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>');
+    $node->body = array('format' => 'full_html',
+      'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>');
     $node->save();
     $nodeId = $node->id();
     if($rows){
@@ -176,21 +182,28 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
     $getNodeArray = array_keys($nids);
     $getNodeID = array_shift($getNodeArray);
     $existNode = Node::load($getNodeID);
-    $existNode->body = array('format' => 'full_html', 'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>');
+    $existNode->body = array('format' => 'full_html',
+    'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>');
     $existNode->save();
     drupal_static_reset();
     drupal_flush_all_caches();
   }
 }
-  /*Update forum url and login/logout url on forum server configuration*/
+/*Update forum url and login/logout url on forum server configuration*/
 function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
   global $base_url;
   $request = \Drupal::httpClient()->post(WT_SETTINGS_URL, [
     'verify' => true,
-    'form_params' => ['action' => 'modifySSOURLs','forumUsername' => $forumUsername,'forumApikey' => $forumAPI,'embed_page_url' => $embedUrl,
-    'login_page_url' => $base_url . "/?q=user/register",'logout_page_url' => $base_url . "/?q=user/logout",'registration_url' => $base_url . "/?q=user/register",]])->getBody()->getContents();
+    'form_params' => ['action' => 'modifySSOURLs',
+      'forumUsername' => $forumUsername,
+      'forumApikey' => $forumAPI,
+      'embed_page_url' => $embedUrl,
+      'login_page_url' => $base_url . "/?q=user/register",
+      'logout_page_url' => $base_url . "/?q=user/logout",
+      'registration_url' => $base_url . "/?q=user/register",]])
+      ->getBody()->getContents();
   }
-  /*create url if embedded is disabled*/
+/*create url if embedded is disabled*/
 function createForumMenuUrl($response){
   $forumUrl = $response->forumAddress;
   $connection = Database::getConnection();
