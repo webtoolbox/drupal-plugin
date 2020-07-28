@@ -64,6 +64,18 @@ function printImageTagLogout(&$data, $elements){
         $img  = '';
         $data = preg_replace('@<body[^>]*>@', '$0' . $img, $data, 1);
     }
+    if (user_is_logged_in() && (isset($_COOKIE['forumLogoutToken']) || isset($_SESSION['forumLoginAuthToken']))) {  
+        $loginAuthUrl = $forumUrl . "/register/dologin?authtoken=" . $_SESSION['forumLoginAuthToken'];
+        $loginAuthUrl = preg_replace('#^https?:#i', '', $loginAuthUrl);
+        $img             = '<img src="' . $loginAuthUrl . '" border="0" width="0" height="0" alt="">';
+        $data            = preg_replace('@</body[^>]*>@', '$0' . $img, $data, 1);
+        unsetLoginSession();
+        resetCookieOnLogout();
+    } else {
+        $img  = '';
+        $data = preg_replace('@<body[^>]*>@', '$0' . $img, $data, 1);
+    }
+     
     return $data;
 }
 function getUserid($userEmail){

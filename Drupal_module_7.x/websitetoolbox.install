@@ -1,4 +1,4 @@
-<?php 
+<?php   
 function WebsiteToolbox_uninstall() {
 	$wtbForumUrl = variable_get('forums_url');
 	$nodeResult = (new EntityFieldQuery())

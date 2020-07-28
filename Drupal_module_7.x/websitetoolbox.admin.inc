@@ -3,7 +3,7 @@ namespace WebsiteToolboxSettings;
 /*create module admin configuration form*/
 function adminConfigPageLayout(){
     $form                   = array();
-    $html                   = '<h2>Forums by Website Toolbox</h2><br /><b>Please log in to your Website Toolbox account.</b><p>Not a Website Toolbox Forum owner? <a href="https://www.websitetoolbox.com/wordpress" target="_blank">Create a Forum Now!</a></p><p>Please <a href="https://www.websitetoolbox.com/contact?subject=WordPress+Plugin+Setup+Help" target="_blank">Contact Customer Support</a> if you need help getting set up.</p>';
+    $html                   = '<h2>Forums by Website Toolbox</h2><br /><b>Please log in to your Website Toolbox account.</b><p>Not a Website Toolbox Forum owner? <a href="https://www.websitetoolbox.com/forum/?drupal" target="_blank">Create a Forum Now!</a></p><p>Please <a href="https://www.websitetoolbox.com/contact?subject=Drupal+Plugin+Setup+Help" target="_blank">Contact Customer Support</a> if you need help getting set up.</p>';
     $form['display_html'][] = array(
         '#type' => 'markup',
         '#markup' => $html
@@ -92,6 +92,7 @@ function adminConfigPageSubmit($formId, &$formState){
         $forumEmbeddedOption = $_POST['embeddedValue'];
     }
     checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption);
+    existingUserForumLogin();
     drupal_static_reset();
     drupal_flush_all_caches();
 }
@@ -103,7 +104,7 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
         if ($result->code != 200 || $response->{'errorMessage'}) {
             if ($result->code == 403) {
                 $ip           = file_get_contents('https://api.ipify.org');
-                $errorMessage = "Your IP address ($ip) is blocked. Please <a href='https://www.websitetoolbox.com/contact?subject=WordPress+IP($ip)+Blocked' target='_blank'>Contact Website Toolbox</a>.";
+                $errorMessage = "Your IP address ($ip) is blocked. Please <a href='https://www.websitetoolbox.com/contact?subject=drupal+IP($ip)+Blocked' target='_blank'>Contact Website Toolbox</a>.";
             } elseif ($result->code != 200) {
                 $errorMessage = $response->{'errorMessage'};
             } else {
