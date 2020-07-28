@@ -21,34 +21,31 @@ function WebsiteToolbox_menu(){
 function WebsiteToolbox_help($path, $arg) {
   switch ($path) {
     case 'admin/help#websitetoolbox':
-      $output = '';
-      $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('Your Drupal forum doesn’t need to be basic. Website Toolbox is a cloud-based forum plugin that allows you to easily add a powerful, intuitive, and maintenance-free forum to Drupal without slowing it down. No database, servers, or coding required');
-      $output .= '<h3>' . t('How to Configure Website Toolbox Forum') . '</h3>';
-      $output .= '<dl>';
-      $output .= '<dt>' . t('Go to Modules >> Website Toolbox Forum >> Configure.') . '</dt>';
-      $output .= '<dt>' . t('Enter your Website Toolbox account information') . '</dt>';
-      $output .= '<dt>' . t('Select option to embedded/non-embedded forum') . '</dt>';
-      $output .= '<dd></dd>';
-      $output .= '<dd>' . t('<b>Embedded: </b> Forum will be displayed on a website page as a "forum".') . '</dd>';
-      $output .= '<dd>' . t('<b>Non-embedded: </b>Will create a menu link but will take you to the forum page(https://yourforum.discussion.community)') . '</dd>';
-     
-      $output .= '</dl>';
-      return $output;
+          $output = '';
+          $output .= '<h3>' . t('About') . '</h3>';
+          $output .= '<p>' . t('Your Drupal forum doesn’t need to be basic. Website Toolbox is a cloud-based forum plugin that allows you to easily add a powerful, intuitive, and maintenance-free forum to Drupal without slowing it down. No database, servers, or coding required');
+          $output .= '<h3>' . t('How to Configure Website Toolbox Forum') . '</h3>';
+          $output .= '<dl>';
+          $output .= '<dt>' . t('Go to Modules >> Website Toolbox Forum >> Configure.') . '</dt>';
+          $output .= '<dt>' . t('Enter your Website Toolbox account information') . '</dt>';
+          $output .= '<dt>' . t('Select option to embedded/non-embedded forum') . '</dt>';
+          $output .= '<dd></dd>';
+          $output .= '<dd>' . t('<b>Embedded: </b> Forum will be displayed on a website page as a "forum".') . '</dd>';
+          $output .= '<dd>' . t('<b>Non-embedded: </b>Will create a menu link but will take you to the forum page(https://yourforum.discussion.community)') . '</dd>';     
+          $output .= '</dl>';
+          return $output;
       }
 }
 /** * Implements hook_permission(). Implements hook_menu for backend settings page().Create "permission link for custom module in administartor" */
 function WebsiteToolbox_permission(){
     return array(
         'administer Website Toolbox Forum settings' => array(
-            'title' => t('administer Website Toolbox Forum settings'),
-             
+            'title' => t('administer Website Toolbox Forum settings'),             
         )
     );
 }
 /*check if embedded is enable/disable in configuration*/
 $checkIfEmbedded = variable_get('forum_embedded_option');
-
 /*append forum link with authtoken after user logged in Case embedded disbale*/
 if (user_is_logged_in() && $checkIfEmbedded != 1) {
     function WebsiteToolbox_url_outbound_alter(&$path, &$options, $originalPath)
@@ -62,8 +59,7 @@ if (user_is_logged_in() && $checkIfEmbedded != 1) {
             $options['query']['authtoken'] = $cookie;
         }
     }
-}
- 
+} 
 /*drupal hook to show forum after user logged in. Append embedded forum url with authtoken*/
 function WebsiteToolbox_page_alter(&$page){
     $page['#post_render'][] = 'WebsiteToolboxSSO\printImageTagLogout';
@@ -94,7 +90,6 @@ if (user_is_logged_in() && $checkIfEmbedded == 1) {
         $page['body'][0]['#markup'] = $content_changed;
     }
 }
-
 function WebsiteToolbox_user_login(&$edit, $account){
     global $user;
     WebsiteToolboxSSO\checkSession();
@@ -104,7 +99,6 @@ function WebsiteToolbox_user_login(&$edit, $account){
     drupal_static_reset();
     drupal_flush_all_caches();
 }
-
 function WebsiteToolbox_user_insert(&$edit, $account, $category){
     $username = $_POST['name'];
     $email    = $_POST['mail'];
