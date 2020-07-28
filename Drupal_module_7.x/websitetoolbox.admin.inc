@@ -96,7 +96,6 @@ function adminConfigPageSubmit($formId, &$formState){
     drupal_static_reset();
     drupal_flush_all_caches();
 }
-
 function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
     $result = getForumDetails($forumUsername, $forumPassword, $forumEmbeddedOption);
     if ($result) {
@@ -122,15 +121,13 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
             } elseif (variable_get('forum_username') != $forumUsername) {
                 variable_del('forum_username');
                 variable_set('forum_username', $forumUsername);
-            }
-            
+            }            
             if (variable_get('forum_api_key') == '') {
                 variable_set('forum_api_key', $forumApiKey);
             } elseif (variable_get('forum_api_key') != $forumApiKey) {
                 variable_del('forum_api_key');
                 variable_set('forum_api_key', $forumApiKey);
-            }
-            
+            }            
             if (variable_get('forum_url') == '') {
                 variable_set('forum_url', $forumAddress);
             } elseif (variable_get('forum_url') != $forumAddress) {
@@ -140,7 +137,6 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
         }
     }
 }
-
 /*get forum username, password, API key */
 function getForumDetails($forumUsername, $forumPassword, $forumEmbeddedOption){
     global $base_url;
@@ -244,8 +240,7 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
             'body_value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>',
             'body_summary' => $forumUrl,
             'body_format' => 'full_html'
-        ))->execute();
-        
+        ))->execute();        
         $checkMenuExist = menu_get_item($forumUrl);
         $menu           = menu_load_links('main-menu');
         for ($i = 0; $i < count($menu); $i++) {
@@ -281,10 +276,8 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
             'body_value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>'
         ))->condition('entity_id', $nodeId, '=')->execute();
     }
-    cache_clear_all('*', 'cache_menu', TRUE);
-    
+    cache_clear_all('*', 'cache_menu', TRUE);    
 }
-
 /*Update forum url and login/logout url on forum server configuration*/
 function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
     global $base_url;
@@ -310,7 +303,6 @@ function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
         die();
     }
 }
-
 /*create url if embedded is disabled*/
 function createForumMenuUrl($response){
     $forumUrl = $response->{'forumAddress'};
