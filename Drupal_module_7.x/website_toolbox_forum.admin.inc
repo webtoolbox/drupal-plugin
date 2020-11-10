@@ -1,9 +1,9 @@
 <?php
-namespace WebsiteToolboxSettings;
+const WT_SETTINGS_URL = 'https://www.websitetoolbox.com/tool/members/mb/settings';
 /*create module admin configuration form*/
-function adminConfigPageLayout(){
+function website_toolbox_forum_config_page_layout(){
     $form                   = array();
-    $html                   = '<h2>Forums by Website Toolbox</h2><br /><b>Please log in to your Website Toolbox account.</b><p>Not a Website Toolbox Forum owner? <a href="https://www.websitetoolbox.com/wordpress" target="_blank">Create a Forum Now!</a></p><p>Please <a href="https://www.websitetoolbox.com/contact?subject=WordPress+Plugin+Setup+Help" target="_blank">Contact Customer Support</a> if you need help getting set up.</p>';
+    $html                   = '<h2>Forums by Website Toolbox</h2><br /><b>Please log in to your Website Toolbox account.</b><p>Not a Website Toolbox Forum owner? <a href="https://www.websitetoolbox.com/forum/?drupal" target="_blank">Create a Forum Now!</a></p><p>Please <a href="https://www.websitetoolbox.com/contact?subject=Drupal+Plugin+Setup+Help" target="_blank">Contact Customer Support</a> if you need help getting set up.</p>';
     $form['display_html'][] = array(
         '#type' => 'markup',
         '#markup' => $html
@@ -14,7 +14,6 @@ function adminConfigPageLayout(){
             '#type' => 'markup',
             '#markup' => $html_error
         );
-        
     }
     if ((variable_get('forum_username') == '') || (isset($_GET['forumSettingOption']) && $_GET['forumSettingOption'] == 1)) {
         $form['forum_username'] = array(
@@ -38,7 +37,6 @@ function adminConfigPageLayout(){
             '#type' => 'markup',
             '#markup' => $html_hidden
         );
-        
     } else {
         $html1                  = "<div><b>Website Toolbox Username :  </b>" . variable_get('forum_username') . "&nbsp;&nbsp;&nbsp;    
             <a href='?q=" . $_GET['q'] . "&forumSettingOption=1'>Change</a></div>";
@@ -62,25 +60,24 @@ function adminConfigPageLayout(){
             '#required' => FALSE
         );
     }
-    
-    $form['#submit'][]      = 'websiteToolboxSettings\adminConfigPageSubmit';
+    $form['#submit'][] = 'website_toolbox_forum_config_page_submit';
     return system_settings_form($form);
 }
 /*create module admin configuration form*/
 /*submit username and password for forum configuation */
-function adminConfigPageSubmit($formId, &$formState){
+function website_toolbox_forum_config_page_submit($formId, &$formState){
     if (isset($_POST['forum_username']) && $_POST['forum_username'] != '') {
-        $forumUsername = $_POST['forum_username'];
+        $forumUsername = check_plain($_POST['forum_username']);
     } else {
         $forumUsername = variable_get('forum_username');
     }
     if (isset($_POST['forum_password']) && $_POST['forum_password'] != '') {
-        $forumPassword = $_POST['forum_password'];
+        $forumPassword = check_plain($_POST['forum_password']);
     } else {
         $forumPassword = variable_get('forum_password');
     }
     if (isset($_POST['forum_embedded_option'])) {
-        $forumEmbeddedOption = $_POST['forum_embedded_option'];
+        $forumEmbeddedOption = check_plain($_POST['forum_embedded_option']);
     }
     if (isset($forumEmbeddedOption)) {
         if ($forumEmbeddedOption == 1) {
@@ -89,21 +86,25 @@ function adminConfigPageSubmit($formId, &$formState){
             $forumEmbeddedOption = 0;
         }
     } else {
-        $forumEmbeddedOption = $_POST['embeddedValue'];
+        if (isset($_POST['embeddedValue'])) {
+            $forumEmbeddedOption = check_plain($_POST['embeddedValue']);
+        } else {
+            $forumEmbeddedOption = 0;
+        }
     }
-    checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption);
+    website_toolbox_forum_check_forum_listed($forumUsername, $forumPassword, $forumEmbeddedOption);
+    website_toolbox_forum_existing_user_forum_login();
     drupal_static_reset();
     drupal_flush_all_caches();
 }
-
-function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
-    $result = getForumDetails($forumUsername, $forumPassword, $forumEmbeddedOption);
+function website_toolbox_forum_check_forum_listed($forumUsername, $forumPassword, $forumEmbeddedOption){
+    $result = website_toolbox_forum_get_forum_details($forumUsername, $forumPassword, $forumEmbeddedOption);
     if ($result) {
         $response = json_decode($result->data);
         if ($result->code != 200 || $response->{'errorMessage'}) {
             if ($result->code == 403) {
                 $ip           = file_get_contents('https://api.ipify.org');
-                $errorMessage = "Your IP address ($ip) is blocked. Please <a href='https://www.websitetoolbox.com/contact?subject=WordPress+IP($ip)+Blocked' target='_blank'>Contact Website Toolbox</a>.";
+                $errorMessage = "Your IP address ($ip) is blocked. Please <a href='https://www.websitetoolbox.com/contact?subject=drupal+IP($ip)+Blocked' target='_blank'>Contact Website Toolbox</a>.";
             } elseif ($result->code != 200) {
                 $errorMessage = $response->{'errorMessage'};
             } else {
@@ -139,9 +140,8 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
         }
     }
 }
-
 /*get forum username, password, API key */
-function getForumDetails($forumUsername, $forumPassword, $forumEmbeddedOption){
+function website_toolbox_forum_get_forum_details($forumUsername, $forumPassword, $forumEmbeddedOption){
     global $base_url;
     $data             = array(
         'action' => 'checkPluginLogin',
@@ -170,7 +170,7 @@ function getForumDetails($forumUsername, $forumPassword, $forumEmbeddedOption){
         $forumUsername = $forumUsername;
         if ($forumEmbeddedOption == 1) {
             #add embed code and set it as a link if "embed" option is disabled.            
-            createEmbeddedForum($response, $forumEmbeddedOption);
+            website_toolbox_forum_create_embeddedforum($response, $forumEmbeddedOption);
             global $base_url;
             $menu = menu_load_links('main-menu');
             for ($i = 0; $i < count($menu); $i++) {
@@ -178,11 +178,11 @@ function getForumDetails($forumUsername, $forumPassword, $forumEmbeddedOption){
                     $menu_link = $menu[$i]['link_path'];
                 }
             }
-            updateForumData($forumUsername, $forumApiKey, $base_url . "/?q=".$menu_link);
+            website_toolbox_forum_update_forum_data($forumUsername, $forumApiKey, $base_url . "/?q=" . $menu_link);
         } else {
             #Remove embed code and set it as a link if "embed" option is disabled.            
-            createForumMenuUrl($response);
-            updateForumData($forumUsername, $forumApiKey);
+            website_toolbox_forum_create_forum_menu_url($response);
+            website_toolbox_forum_update_forum_data($forumUsername, $forumApiKey);
         }
         return $result;
     } else {
@@ -193,8 +193,8 @@ function getForumDetails($forumUsername, $forumPassword, $forumEmbeddedOption){
     }
 }
 /*If forum embedded if checked, save forum details in database*/
-function createEmbeddedForum($response, $forumEmbeddedOption){
-    $nodeResult = checkForumExist();
+function website_toolbox_forum_create_embeddedforum($response, $forumEmbeddedOption){
+    $nodeResult = website_toolbox_forum_check_forum_exist();
     $forumUrl   = $response->{'forumAddress'};
     if (empty($nodeResult)) {
         global $user;
@@ -243,8 +243,7 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
             'body_value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>',
             'body_summary' => $forumUrl,
             'body_format' => 'full_html'
-        ))->execute();
-        
+        ))->execute();        
         $checkMenuExist = menu_get_item($forumUrl);
         $menu           = menu_load_links('main-menu');
         for ($i = 0; $i < count($menu); $i++) {
@@ -263,7 +262,6 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
             'module' => 'menu'
         );
         menu_link_save($item);
-        
         $path = array(
             'source' => "node/" . $nodeId,
             'alias' => 'Forum'
@@ -281,11 +279,9 @@ function createEmbeddedForum($response, $forumEmbeddedOption){
         ))->condition('entity_id', $nodeId, '=')->execute();
     }
     cache_clear_all('*', 'cache_menu', TRUE);
-    
 }
-
 /*Update forum url and login/logout url on forum server configuration*/
-function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
+function website_toolbox_forum_update_forum_data($forumUsername, $forumAPI, $embedUrl = ""){
     global $base_url;
     $data    = array(
         'action' => 'modifySSOURLs',
@@ -300,8 +296,7 @@ function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
         'type' => 'json',
         'method' => 'POST',
         'data' => drupal_http_build_query($data),
-        'timeout' => 15
-        
+        'timeout' => 15        
     );
     $result  = drupal_http_request(WT_SETTINGS_URL, $options);
     if (!$result) {
@@ -309,18 +304,16 @@ function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
         die();
     }
 }
-
 /*create url if embedded is disabled*/
-function createForumMenuUrl($response){
+function website_toolbox_forum_create_forum_menu_url($response){
     $forumUrl = $response->{'forumAddress'};
-    
     $checkMenuExist = menu_get_item($forumUrl);
-    $nodeResult     = checkForumExist();
+    $nodeResult     = website_toolbox_forum_check_forum_exist();
     if (!empty($nodeResult)) {
         $node = node_load(array_shift(array_keys($nodeResult['node'])));
         node_delete($node->nid);
     }
-    if (!$checkMenuExist) {
+    if (!empty($checkMenuExist)) {
         $menu = menu_load_links('main-menu');
         for ($i = 0; $i < count($menu); $i++) {
             if ($menu[$i]['link_title'] == 'Forum') {
@@ -340,4 +333,3 @@ function createForumMenuUrl($response){
         cache_clear_all('*', 'cache_menu', TRUE);
     }
 }
-?>

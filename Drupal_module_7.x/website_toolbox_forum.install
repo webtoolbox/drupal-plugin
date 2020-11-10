@@ -1,12 +1,6 @@
-<?php 
-function WebsiteToolbox_uninstall() {
+<?php   
+function website_toolbox_forum_uninstall(){
 	$wtbForumUrl = variable_get('forums_url');
-	$nodeResult = (new EntityFieldQuery())
-        ->entityCondition('entity_type', 'node')
-        ->propertyCondition('title', 'Forum')
-        ->execute();
-	$node = node_load(array_shift(array_keys($nodeResult['node'])));
-	node_delete($node->nid);
 	$menu = menu_load_links('main-menu');
 	for($i=0;$i<count($menu);$i++){
 		if($menu[$i]['link_title'] == 'Forum'){
@@ -21,16 +15,11 @@ function WebsiteToolbox_uninstall() {
 	variable_del('forum_username'); 
 	variable_del('forum_password'); 
 	variable_del('forum_embedded_option'); 
-
 }
-function  WebsiteToolbox_disable(){
+function  website_toolbox_forum_disable(){
 	$wtbForumUrl = variable_get('forum_url');
-	$nodeResult = (new EntityFieldQuery())
-	->entityCondition('entity_type', 'node')
-	->propertyCondition('title', 'Forum')
-	->execute();
 	$node = node_load(array_shift(array_keys($nodeResult['node'])));
-	node_delete($node->nid);
+	node_delete($node->nid);*/
 	$menu = menu_load_links('main-menu');
 	for($i=0;$i<count($menu);$i++){
 		if($menu[$i]['link_title'] == 'Forum'){
@@ -45,5 +34,11 @@ function  WebsiteToolbox_disable(){
 	variable_del('forum_username'); 
 	variable_del('forum_password'); 
 	variable_del('forum_embedded_option');
+	global $base_path;
+    setcookie('forumLogoutToken', 0, time() - 3600, $base_path);
+    unset($_COOKIE['forumLogoutToken']);
+    setcookie('forumLoginUserid', '', time() - 3600, $base_path);
+    unset($_COOKIE['forumLoginUserid']);
+    setcookie('loginRemember', '', time() - 3600, $base_path);
+    unset($_COOKIE['loginRemember']);
 }
-?>

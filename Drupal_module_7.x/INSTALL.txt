@@ -1,0 +1,4 @@
+
+INSTALLATION
+------------
+For installation and configuration instructions, please visit https://www.websitetoolbox.com/blog/drupal-module-829
