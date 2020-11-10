@@ -1,24 +1,30 @@
-<?php
-function website_toolbox_forum_uninstall() {
-	$wtbForumUrl	= \Drupal::config('node.settings')->get('forum_url');
-	$query 			= \Drupal::entityQuery('node')->condition('title', 'Forum');
-	$nids 			= $query->execute();
-	$getNodeArray 		= array_keys($nids);
-	$getNodeID 		= array_shift($getNodeArray);
-	node_delete($getNodeID);
-	$menu 			= menu_load_links('main-menu');
-	for($i=0;$i<count($menu);$i++){
-		if($menu[$i]['link_title'] == 'Forum'){
-			menu_link_delete(NULL,$menu[$i]['link_path']);
-		}
-	}
-	$num_deleted = db_delete('url_alias')
-	->condition('alias', "Forum")
-	->execute();
-	variable_del('forum_api_key');
-	variable_del('forum_url');
-	variable_del('forum_username');
-	variable_del('forum_password');
-	variable_del('forum_embedded_option');
+<?php 
+use Drupal\Core\Form\FormBase;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
+use Drupal\node\Entity\Node;
+use Drupal\menu_link_content\Entity\MenuLinkContent;
+use Drupal\Core\Database\Database;
 
-}?>
+function website_toolbox_forum_uninstall() {
+	$wtbForumUrl = \Drupal::config('node.settings')->get('forum_url');
+	$query = \Drupal::entityQuery('node')->condition('title', 'Forum');
+    $nids = $query->execute();  
+	$database = \Drupal::database();	 
+    $query = $database->query("SELECT * FROM  {menu_link_content_data} where title = 'Forum'");
+    $result = $query->fetchAll(); 
+    $menuId = $result[0]->id;       
+    if($result) { 
+        $menu_link = MenuLinkContent::load($menuId);
+        $menu_link->delete();
+        $query = $database->query("delete  FROM  {path_alias} where alias = 'forum'");
+    } 
+	$query = $database->query("delete  FROM  {path_alias} where alias = 'forum'");
+	\Drupal::service('config.factory')->getEditable('node.settings')->delete();
+    setcookie('forumLogoutToken', 0, time() - 3600, "/");
+    unset($_COOKIE['forumLogoutToken']);
+    setcookie('forumLoginUserid', '', time() - 3600, "/");
+    unset($_COOKIE['forumLoginUserid']);
+    setcookie('loginRemember', '', time() - 3600, "/");
+    unset($_COOKIE['loginRemember']);
+ }?>
