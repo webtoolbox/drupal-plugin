@@ -1,13 +1,11 @@
 name = Website Toolbox Forum  
 description = Your Drupal forum doesn’t need to be basic. Website Toolbox is a cloud-based forum plugin that allows you to easily add a powerful, intuitive, and maintenance-free forum to Drupal without slowing it down. No database, servers, or coding required.
-core = 7.x
 package = Other
-version = 7.x-1.2
-files[] = websitetoolbox.admin.inc
-files[] = websitetoolbox.include.inc
-files[] = websitetoolbox.install
-configure = admin/config/websitetoolbox
-version = "7.x-1.2"
+files[] = website_toolbox_forum.admin.inc
+files[] = website_toolbox_forum.include.inc
+files[] = website_toolbox_forum.install
+configure = admin/config/website_toolbox_forum
+version = "7.x-2.0"
 core = "7.x"
 project = "drupal"
-datestamp = "1591709307"
+ 
