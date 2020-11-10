@@ -1,5 +1,5 @@
 <?php
-const WT_SETTINGS_URL = 'https://beta.websitetoolbox.com/tool/members/mb/settings';
+const WT_SETTINGS_URL = 'https://www.websitetoolbox.com/tool/members/mb/settings';
 /*create module admin configuration form*/
 function website_toolbox_forum_config_page_layout(){
     $form                   = array();
@@ -37,7 +37,6 @@ function website_toolbox_forum_config_page_layout(){
             '#type' => 'markup',
             '#markup' => $html_hidden
         );
-        
     } else {
         $html1                  = "<div><b>Website Toolbox Username :  </b>" . variable_get('forum_username') . "&nbsp;&nbsp;&nbsp;    
             <a href='?q=" . $_GET['q'] . "&forumSettingOption=1'>Change</a></div>";
@@ -244,8 +243,7 @@ function website_toolbox_forum_create_embeddedforum($response, $forumEmbeddedOpt
             'body_value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>',
             'body_summary' => $forumUrl,
             'body_format' => 'full_html'
-        ))->execute();
-        
+        ))->execute();        
         $checkMenuExist = menu_get_item($forumUrl);
         $menu           = menu_load_links('main-menu');
         for ($i = 0; $i < count($menu); $i++) {
@@ -298,8 +296,7 @@ function website_toolbox_forum_update_forum_data($forumUsername, $forumAPI, $emb
         'type' => 'json',
         'method' => 'POST',
         'data' => drupal_http_build_query($data),
-        'timeout' => 15
-        
+        'timeout' => 15        
     );
     $result  = drupal_http_request(WT_SETTINGS_URL, $options);
     if (!$result) {

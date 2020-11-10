@@ -63,7 +63,6 @@ function website_toolbox_forum_url_outbound_alter(&$path, &$options, $originalPa
         }
     }
 }
-
 /*drupal hook to show forum after user logged in. Append embedded forum url with authtoken*/
 /** * Implements hook_page_alter */
 function website_toolbox_forum_page_alter(&$page){

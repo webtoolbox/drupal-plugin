@@ -1,5 +1,5 @@
 <?php
-const WT_API_URL = 'https://api.websitetoolbox.com/dev/api';
+const WT_API_URL = 'https://api.websitetoolbox.com/v1/api';
 
 function website_toolbox_forum_get_forum_authtoken($user, $type){
     if ($type == 'login') {
@@ -17,15 +17,13 @@ function website_toolbox_forum_get_forum_authtoken($user, $type){
             'apikey' => $forumsApiKey,
             'user' => $username,
             'email' => $email,
-            'externalUserid' => $userId
-            
+            'externalUserid' => $userId            
         );
         $options  = array(
             'type' => 'json',
             'method' => 'POST',
             'data' => drupal_http_build_query($data),
-            'timeout' => 15
-            
+            'timeout' => 15            
         );
         $pass     = $user->pass;
         if (isset($pass) && $pass != "") {
@@ -69,13 +67,11 @@ function website_toolbox_forum_print_image_tag_logout(&$data, $elements){
         $loginAuthUrl = $forumUrl . "/register/dologin?authtoken=" . $_SESSION['forumLoginAuthToken'];
         $loginAuthUrl = preg_replace('#^https?:#i', '', $loginAuthUrl);
         $img          = '<img src="' . $loginAuthUrl . '" border="0" width="0" height="0" alt="">';
-        $data         = preg_replace('@</body[^>]*>@', '$0' . $img, $data, 1);
-        
+        $data         = preg_replace('@</body[^>]*>@', '$0' . $img, $data, 1);        
     } else {
         $img  = '';
         $data = preg_replace('@<body[^>]*>@', '$0' . $img, $data, 1);
-    }
-    
+    }    
     return $data;
 }
 function website_toolbox_forum_get_userid($userEmail){
