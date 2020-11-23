@@ -1,0 +1,8 @@
+website_toolbox_forum.sync:
+  path: '/admin/website-toolbox-forum/development/configuration'
+  defaults:
+    _form: '\Drupal\website_toolbox_forum\Form\WebsitetoolboxSync'
+    _title: 'Synchronize'
+  requirements:
+    _permission: 'synchronize configuration'
+ 
