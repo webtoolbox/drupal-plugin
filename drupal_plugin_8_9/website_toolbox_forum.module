@@ -138,12 +138,14 @@ function website_toolbox_forum_user_update(Drupal\Core\Entity\EntityInterface $e
       $avatarUrl = '';
     }
     $email = $entity->getEmail();
-    $userDetails = array("email" => $email,
-            "avatarUrl" => $avatarUrl,
-            "username" => $userName,
-            "externalUserid" => $externalUserid,
-            "name" => $userName);
-            $url =  "/users/$userId";
+    $userDetails = array(
+        "email" => $email,
+        "avatarUrl" => $avatarUrl,
+        "username" => $userName,
+        "externalUserid" => $externalUserid,
+        "name" => $userName
+     );
+     $url =  "/users/$userId";
      Drupal\website_toolbox_forum\sendApiRequest('POST',$url,$userDetails); 
      Drupal\website_toolbox_forum\assignDivestUserGroup($email, $userName, $assignUserGroups,$removeUserGroups);
 }
@@ -194,7 +196,10 @@ function website_toolbox_forum_user_role_insert(EntityInterface $entity) {
       return;
     }
     $requestUrl = "/usergroups";
-    $userGroupDetails = array("title"=>$entity->id(),"usertitle"=>$entity->label()); 
+    $userGroupDetails = array(
+        "title"=>$entity->id(),
+        "usertitle"=>$entity->label()
+    ); 
     Drupal\website_toolbox_forum\sendApiRequest('POST',$requestUrl,$userGroupDetails);
 }
 function website_toolbox_forum_user_role_update(EntityInterface $entity) {
@@ -203,7 +208,9 @@ function website_toolbox_forum_user_role_update(EntityInterface $entity) {
     } 
     $userGroupId = Drupal\website_toolbox_forum\getUserGroupId($entity->id()); 
     $requestUrl = "/usergroups/".$userGroupId;
-    $userGroupDetails = array("usertitle"=>$entity->label()); 
+    $userGroupDetails = array(
+        "usertitle"=>$entity->label()
+    ); 
     Drupal\website_toolbox_forum\sendApiRequest('POST',$requestUrl,$userGroupDetails);
 }
 
