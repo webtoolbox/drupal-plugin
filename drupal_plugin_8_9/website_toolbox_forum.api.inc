@@ -22,7 +22,7 @@ function getForumAuthtoken($user, $type){
         //Check if http/https request could not return any error then filter JSON from response
         if ($request) {
             $response = json_decode($request);
-             if ($response && $response->authtoken != "") {
+            if ($response && $response->authtoken != "") {
                 $authtoken     = $response->authtoken;
                 $forumUserid   = $response->userid;
                 $responseArray = array(
@@ -31,9 +31,9 @@ function getForumAuthtoken($user, $type){
                 );
                 return $responseArray;
              }
-          }
         }
     }
+}
 function saveAuthToken($authtoken, $forumUserid){
     $_SESSION['forumLoginAuthToken'] = $authtoken;
     setForumCookies('forumLoginUserid', $forumUserid, 0);
