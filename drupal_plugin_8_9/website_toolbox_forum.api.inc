@@ -5,18 +5,20 @@ function getForumAuthtoken($user, $type){
     $forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key');
     $forumUrl     = \Drupal::config('node.settings')->get('forum_url');
     if ($forumsApiKey) {
-        $username = $user->name;
-        $email    = $user->mail;
-        $userId   = $user->externalUserid;
-        $URL      = $forumUrl . "/register/setauthtoken";
-        $request = \Drupal::httpClient()->post($URL, [
-            'verify' => true,
-            'form_params' => [
-                'type' => 'json',
-                'apikey' => $forumsApiKey,
-                'user' => $username,
-                'email' =>$email,
-                'externalUserid' => $userId,]])->getBody()->getContents();
+        $username   = $user->name;
+        $email      = $user->mail;
+        $userId     = $user->externalUserid;
+        $URL        = $forumUrl . "/register/setauthtoken";
+        $request    = \Drupal::httpClient()->post($URL, [
+            'verify'        => true,
+            'form_params'   => [
+                'type'          => 'json',
+                'apikey'        => $forumsApiKey,
+                'user'          => $username,
+                'email'         =>$email,
+                'externalUserid'=> $userId,
+                ]
+        ])->getBody()->getContents();
         //Check if http/https request could not return any error then filter JSON from response
         if ($request) {
             $response = json_decode($request);
@@ -38,7 +40,9 @@ function saveAuthToken($authtoken, $forumUserid){
 }
 function getUserDetails($userEmail){
     if ($userEmail) {
-        $userEmailDetail = array('email' => $userEmail);
+        $userEmailDetail = array(
+            'email' => $userEmail
+        );
         $url = WT_API_URL."/users/";
         $response = sendApiRequest('GET', "/users/", $userEmailDetail);
         return $response;
@@ -49,9 +53,9 @@ function getUserGroupByName($userGroupDetails){
     $userGroupId = $userGroupDetails->{'data'}[0]->{'userGroups'};
     for($i=0; $i<count($userGroupId);$i++){
         $requestUrl = "/usergroups/".$userGroupId[$i];
-        $response = sendApiRequest('GET',$requestUrl); 
+        $response   = sendApiRequest('GET',$requestUrl); 
         if($response->{'defaultGroup'} == false)
-        {   $userGroupIds = $response->{'userGroupId'}; 
+        {   $userGroupIds                   = $response->{'userGroupId'}; 
             $UserGroupByName[$userGroupIds] = $response->{'title'};
         }
     }
@@ -60,30 +64,33 @@ function getUserGroupByName($userGroupDetails){
 function getUserGroupId($title){
     $getUserGroupList = getGroupList();
     for($i=0; $i< count($getUserGroupList['data']);$i++){
-        $userGroupID =  $getUserGroupList['data'][$i]->{"userGroupId"};
-        $userGroups[$userGroupID] = $getUserGroupList['data'][$i]->{"title"};
+        $userGroupID                =  $getUserGroupList['data'][$i]->{"userGroupId"};
+        $userGroups[$userGroupID]   = $getUserGroupList['data'][$i]->{"title"};
     }  
     $userGroupId = array_search($title,$userGroups);
     return $userGroupId;
 }
 function getGroupList(){
     $requestUrl = "/usergroups";
-    $limit = array("limit"=>100); 
-    $response = (array)sendApiRequest('GET',$requestUrl,$limit); 
+    $limit      = array("limit"=>100); 
+    $response   = (array)sendApiRequest('GET',$requestUrl,$limit); 
     return $response;
 }
 function getCustomUserGroups(){
     $getUserGroupList = getGroupList();
     for($i=0; $i< count($getUserGroupList['data']);$i++){
         if($getUserGroupList['data'][$i]->{"defaultGroup"} === false){
-            $userGroupID =  $getUserGroupList['data'][$i]->{"userGroupId"};
-            $userGroups[$userGroupID] =  $getUserGroupList['data'][$i]->{"title"};
+            $userGroupID                =  $getUserGroupList['data'][$i]->{"userGroupId"};
+            $userGroups[$userGroupID]   =  $getUserGroupList['data'][$i]->{"title"};
         }
     }  
     return $userGroups;
  }
 function assignDivestUserGroup($userEmail, $username, $userGroupsToAssign ='', $userGroupsToDivest = '' ){
-    $userDetails = array("emailAddresses"=>$userEmail,"usernames"=>$username);
+    $userDetails = array(
+        "emailAddresses"    =>$userEmail,
+        "usernames"         =>$username
+    );
     if(!empty($userGroupsToAssign)){
       for($i=0;$i<count($userGroupsToAssign);$i++){ 
          $requestUrl = "/usergroups/".$userGroupsToAssign[$i]."/users";
