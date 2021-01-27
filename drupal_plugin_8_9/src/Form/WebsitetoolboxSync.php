@@ -92,9 +92,12 @@ class WebsitetoolboxSync extends FormBase {
             '#type' => 'label',
             '#title' =>'<img src ="../../../core/misc/icons/787878/questionmark-disc.svg">',           
             '#default_value' => \Drupal::config('node.settings')->get('forum_roles_sync_option'),
-            '#attributes' => array('title' => 'If this option is enabled, user groups are created, updated and deleted in your Website Toolbox forum when the corresponding role in Drupal is created/edited/deleted.
-            When a user is created/ edited in Drupal, user will be assigned the same user groups as their Drupal roles.
-            There is no synchronization the other way around. When a user group is created in your forum, a role is not created on Drupal.','class'=>'iconHelp'), );
+            '#attributes' => array(
+                'title' => 'If this option is enabled, user groups are created, updated and deleted in your Website Toolbox forum when the corresponding role in Drupal is created/edited/deleted.
+                When a user is created/ edited in Drupal, user will be assigned the same user groups as their Drupal roles.
+                There is no synchronization the other way around. When a user group is created in your forum, a role is not created on Drupal.',
+                'class'=>'iconHelp')
+        );
         $form['forum_roles_sync_option'] = array(
             '#type' => 'checkbox',
             '#title' => t('<b>Yes</b>'),
@@ -207,8 +210,18 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
 }
 function createEmbeddedForum($response, $forumEmbeddedOption,$nids){
     $forumUrl   = $response->forumAddress;  
-    $node = Node::create(array('type' => 'page','title' => 'Forum','langcode' => 'en','uid' => '1','status' => 1));
-    $node->body = array('format' => 'full_html', 'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>');
+    $node = Node::create(array(
+        'type' => 'page',
+        'title' => 'Forum',
+        'langcode' => 'en',
+        'uid' => '1',
+        'status' => 1
+        )
+    );
+    $node->body = array(
+        'format' => 'full_html',
+        'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>'
+    );
     $node->save();
     $nodeId = $node->id(); 
     $menuLink = MenuLinkContent::create([
