@@ -30,7 +30,7 @@ function getForumAuthtoken($user, $type){
                     'forumUserid' => $forumUserid
                 );
                 return $responseArray;
-             }
+            }
         }
     }
 }
@@ -98,10 +98,10 @@ function assignDivestUserGroup($userEmail, $username, $userGroupsToAssign ='', $
       }
     }
     if(!empty($userGroupsToDivest)){
-      for($j=0;$j<count($userGroupsToDivest);$j++){ 
-         echo $requestUrl = "/usergroups/".$userGroupsToDivest[$j]."/users";
-         sendApiRequest('DELETE',$requestUrl,$userDetails); 
-      }
+        for($j=0;$j<count($userGroupsToDivest);$j++){ 
+            $requestUrl = "/usergroups/".$userGroupsToDivest[$j]."/users";
+            sendApiRequest('DELETE',$requestUrl,$userDetails); 
+        }
     }
 }
 function sendApiRequest($method, $requestPath, $requestData = ''){
