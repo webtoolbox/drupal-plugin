@@ -38,7 +38,9 @@ function saveAuthToken($authtoken, $forumUserid){
 }
 function getUserDetails($userEmail){
     if ($userEmail) {
-        $userEmailDetail = array('email' => $userEmail);
+        $userEmailDetail = array(
+            'email' => $userEmail
+        );
         $url = WT_API_URL."/users/";
         $response = sendApiRequest('GET', "/users/", $userEmailDetail);
         return $response;
@@ -83,7 +85,10 @@ function getCustomUserGroups(){
     return $userGroups;
  }
 function assignDivestUserGroup($userEmail, $username, $userGroupsToAssign ='', $userGroupsToDivest = '' ){
-    $userDetails = array("emailAddresses"=>$userEmail,"usernames"=>$username);
+    $userDetails = array(
+        "emailAddresses"=>$userEmail,
+        "usernames"=>$username
+    );
     if(!empty($userGroupsToAssign)){
       for($i=0;$i<count($userGroupsToAssign);$i++){ 
          $requestUrl = "/usergroups/".$userGroupsToAssign[$i]."/users";
@@ -92,7 +97,7 @@ function assignDivestUserGroup($userEmail, $username, $userGroupsToAssign ='', $
     }
     if(!empty($userGroupsToDivest)){
       for($j=0;$j<count($userGroupsToDivest);$j++){ 
-         echo $requestUrl = "/usergroups/".$userGroupsToDivest[$j]."/users";
+         $requestUrl = "/usergroups/".$userGroupsToDivest[$j]."/users";
          sendApiRequest('DELETE',$requestUrl,$userDetails); 
       }
     }
