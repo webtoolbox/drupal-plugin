@@ -167,17 +167,6 @@ function setForumCookies($cname, $cvalue, $persistent){
 function unsetLoginSession(){
     unset($_SESSION['forumLoginAuthToken']);
 }
-function getDomainName($url){
-  //if $url is empty return $url 
-    if(empty($url)){
-        return $url;
-    }
-    $parsedURL = parse_url($url);
-    $domain = isset($parsedURL['host']) ? $parsedURL['host'] : $parsedURL['path'];
-    if (preg_match('/(?P<domain>[a-z0-9][a-z0-9\-]{1,63}\.[a-z\.]{2,6})$/i', $domain, $regs)) {
-        return $regs['domain'];
-    }
-}
 ?>
 <style>
 .js-form-item-forum-embedded-option, .js-form-item-forum-roles-sync-option{
