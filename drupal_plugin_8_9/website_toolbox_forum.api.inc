@@ -1,6 +1,6 @@
 <?php
 namespace Drupal\website_toolbox_forum;
-const WT_API_URL = 'https://api.websitetoolbox.com/v1/api';
+const WT_API_URL = 'https://api.websitetoolbox.com/dev/api';
 function getForumAuthtoken($user, $type){
     $forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key');
     $forumUrl     = \Drupal::config('node.settings')->get('forum_url');
@@ -38,9 +38,7 @@ function saveAuthToken($authtoken, $forumUserid){
 }
 function getUserDetails($userEmail){
     if ($userEmail) {
-        $userEmailDetail = array(
-            'email' => $userEmail
-        );
+        $userEmailDetail = array('email' => $userEmail);
         $url = WT_API_URL."/users/";
         $response = sendApiRequest('GET', "/users/", $userEmailDetail);
         return $response;
@@ -85,10 +83,7 @@ function getCustomUserGroups(){
     return $userGroups;
  }
 function assignDivestUserGroup($userEmail, $username, $userGroupsToAssign ='', $userGroupsToDivest = '' ){
-    $userDetails = array(
-        "emailAddresses"=>$userEmail,
-        "usernames"=>$username
-    );
+    $userDetails = array("emailAddresses"=>$userEmail,"usernames"=>$username);
     if(!empty($userGroupsToAssign)){
       for($i=0;$i<count($userGroupsToAssign);$i++){ 
          $requestUrl = "/usergroups/".$userGroupsToAssign[$i]."/users";
@@ -97,7 +92,7 @@ function assignDivestUserGroup($userEmail, $username, $userGroupsToAssign ='', $
     }
     if(!empty($userGroupsToDivest)){
       for($j=0;$j<count($userGroupsToDivest);$j++){ 
-         $requestUrl = "/usergroups/".$userGroupsToDivest[$j]."/users";
+         echo $requestUrl = "/usergroups/".$userGroupsToDivest[$j]."/users";
          sendApiRequest('DELETE',$requestUrl,$userDetails); 
       }
     }
@@ -140,7 +135,7 @@ function setCookieOnLogin($responseArray, $rememberme){
         setForumCookies('forumLogoutToken', $responseArray['authtoken'], $persistent);
     }
     return true;
- }
+}
 function resetCookieOnLogout(){
     setcookie('forumLogoutToken', 0, time() - 3600, "/");
     unset($_COOKIE['forumLogoutToken']);
@@ -161,20 +156,20 @@ function setForumCookies($cname, $cvalue, $persistent){
     } else {
         setcookie($cname, $cvalue, $expiration,'/');
     }
- }
- function unsetLoginSession(){
+}
+function unsetLoginSession(){
     unset($_SESSION['forumLoginAuthToken']);
- }
+}
 function getDomainName($url){
   //if $url is empty return $url 
-  if(empty($url)){
-    return $url;
-  }
-  $parsedURL = parse_url($url);
-  $domain = isset($parsedURL['host']) ? $parsedURL['host'] : $parsedURL['path'];
-  if (preg_match('/(?P<domain>[a-z0-9][a-z0-9\-]{1,63}\.[a-z\.]{2,6})$/i', $domain, $regs)) {
-    return $regs['domain'];
-  }
+    if(empty($url)){
+        return $url;
+    }
+    $parsedURL = parse_url($url);
+    $domain = isset($parsedURL['host']) ? $parsedURL['host'] : $parsedURL['path'];
+    if (preg_match('/(?P<domain>[a-z0-9][a-z0-9\-]{1,63}\.[a-z\.]{2,6})$/i', $domain, $regs)) {
+        return $regs['domain'];
+    }
 }
 ?>
 <style>

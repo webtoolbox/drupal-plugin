@@ -4,7 +4,7 @@
  * Contains \Drupal\website_toolbox_forum\Form\WebsitetoolboxforumSync.
  */
 namespace Drupal\website_toolbox_forum\Form;
-const WT_SETTINGS_URL = 'https://www.websitetoolbox.com/tool/members/mb/settings';
+const WT_SETTINGS_URL = 'https://beta.websitetoolbox.com/tool/members/mb/settings';
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
@@ -87,7 +87,7 @@ class WebsitetoolboxSync extends FormBase {
             '#type' => 'label',
             '#prefix' => '<div class="classLabel">',
             '#title' => t('<b>Synchronize Roles  </b>'),
-            );
+        );
         $form['forum_roles_sync_help'] = array(
             '#type' => 'label',
             '#title' =>'<img src ="../../../core/misc/icons/787878/questionmark-disc.svg">',           
@@ -96,8 +96,9 @@ class WebsitetoolboxSync extends FormBase {
                 'title' => 'If this option is enabled, user groups are created, updated and deleted in your Website Toolbox forum when the corresponding role in Drupal is created/edited/deleted.
                 When a user is created/ edited in Drupal, user will be assigned the same user groups as their Drupal roles.
                 There is no synchronization the other way around. When a user group is created in your forum, a role is not created on Drupal.',
-                'class'=>'iconHelp')
-        );
+                'class'=>'iconHelp'
+            ),
+         );
         $form['forum_roles_sync_option'] = array(
             '#type' => 'checkbox',
             '#title' => t('<b>Yes</b>'),
@@ -107,7 +108,7 @@ class WebsitetoolboxSync extends FormBase {
             '#maxlength' => 250,
             '#required' => FALSE,  
         );         
-     } 
+    } 
     $form['actions']['submit'] = array(
       '#type' => 'submit',
       '#value' => $this->t('Submit'),
@@ -128,7 +129,7 @@ class WebsitetoolboxSync extends FormBase {
         $forumPassword = \Drupal::config('node.settings')->get('forum_password');
     }
     $username = \Drupal::config('node.settings')->get('forum_username', "");
-    if(isset($username)){
+    if(!isset($username)){
          $forumEmbeddedOption = 1;
          $userRolesSyncOption = 1;
     }else{
@@ -139,7 +140,9 @@ class WebsitetoolboxSync extends FormBase {
                 $forumEmbeddedOption = 0;
             }
         } else {
-            $forumEmbeddedOption = $_POST['forum_hidden'];
+            if (isset($_POST['forum_hidden'])) {
+                $forumEmbeddedOption = $_POST['forum_hidden'];
+            }
         }  
         if (isset($_POST['forum_roles_sync_option'])) {
             if ($_POST['forum_roles_sync_option'] == 1) {
@@ -171,7 +174,8 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
         'login_page_url' => $base_url . "/?q=user",
         'logout_page_url' => $base_url . "/?q = user/logout",
         'registration_url' => $base_url . "/?q=user/register",],
-        'headers' => ['Content-type' => 'application/json',],])->getBody()->getContents(); 
+        'headers' => ['Content-type' => 'application/json',
+    ]])->getBody()->getContents(); 
     $response = json_decode($request);
     $forumUrl = $response->forumAddress; 
     $forumApiKey = $response->forumApiKey; 
@@ -182,16 +186,21 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
         $query      = \Drupal::entityQuery('node')->condition('title', 'Forum');
         $nids       = $query->execute();
         $getNodeArray = array_keys($nids);
-        $getNodeID = array_shift($getNodeArray);
-        $existNode = Node::load($getNodeID);
+        $getRevisionNodeID = array_shift($getNodeArray); 
+        $existNode = Node::load($getRevisionNodeID);
+        $getNodeId = array_values($nids);
+        $nodeId = 'internal:/node/'.$getNodeId[0];
         if($existNode){
             $existNode->delete();   
-        } 
-        $rows       = $database->query("select * from {menu_link_content_data} where title = 'Forum'")->fetch();
-        $getNodeLinkId = $rows->id;  
-        if($getNodeLinkId != ''){
-            $menu_link = MenuLinkContent::load($getNodeLinkId);
-            $menu_link->delete();
+        }  
+        $rows       = $database->query("select * from {menu_link_content_data} where (link__uri = '".$nodeId."' OR link__uri= '".$forumUrl."') ")->fetch();
+
+        if($rows){
+            $getNodeLinkId = $rows->id;  
+            if($getNodeLinkId != ''){
+                $menu_link = MenuLinkContent::load($getNodeLinkId);
+                $menu_link->delete();
+            }
         }
         unset($_SESSION['flag']);
         if($forumEmbeddedOption == 1){
@@ -210,18 +219,8 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
 }
 function createEmbeddedForum($response, $forumEmbeddedOption,$nids){
     $forumUrl   = $response->forumAddress;  
-    $node = Node::create(array(
-        'type' => 'page',
-        'title' => 'Forum',
-        'langcode' => 'en',
-        'uid' => '1',
-        'status' => 1
-        )
-    );
-    $node->body = array(
-        'format' => 'full_html',
-        'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>'
-    );
+    $node = Node::create(array('type' => 'page','title' => 'Forum','langcode' => 'en','uid' => '1','status' => 1));
+    $node->body = array('format' => 'full_html', 'value' => '<div id="wtEmbedCode"><script type="text/javascript" id="embedded_forum" src="' . $forumUrl . '/js/mb/embed.js"></script><noscript><a href="' . $forumUrl . '">Forum</a></noscript></div>');
     $node->save();
     $nodeId = $node->id(); 
     $menuLink = MenuLinkContent::create([
@@ -252,7 +251,8 @@ function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
          'embed_page_url' => $embedUrl,
          'login_page_url' => $base_url . "/user/register",
          'logout_page_url' => $base_url . "/user/logout",
-         'registration_url' => $base_url . "/user/register",]])->getBody()->getContents();    
+         'registration_url' => $base_url . "/user/register",
+    ]])->getBody()->getContents();    
 }
     /*create url if embedded is disabled*/
 function createForumMenuUrl($response,$nids){

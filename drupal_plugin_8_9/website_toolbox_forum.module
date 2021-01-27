@@ -20,43 +20,47 @@ function website_toolbox_forum_help($route_name, RouteMatchInterface $route_matc
         return $output;
         }
 }
-function website_toolbox_forum_node_view($build) { 
-  	$forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key');
-  	$forumUrl     = \Drupal::config('node.settings')->get('forum_url');
-    $content      =  $build['body'][0]['#text'];
-  	if (preg_match('#^https?://#', \Drupal::config('node.settings')->get('forum_url'))) {
-  	    $forumUrl = \Drupal::config('node.settings')->get('forum_url');
-  	} else {
-  	    $forumUrl = "http://" . \Drupal::config('node.settings')->get('forum_url');
-  	}
-  	$forumEmbedUrl = preg_replace('#^https?:#i', '', $forumUrl);
-  	$auth_token    = '';
-  	if (isset($_COOKIE['forumLogoutToken'])) {
-  	    $auth_token = "?authtoken=" . $_COOKIE['forumLogoutToken'];
-  	} elseif (isset($_SESSION['forumLoginAuthToken'])) {
-  	    $auth_token = "?authtoken=" . $_SESSION['forumLoginAuthToken'];
-  	}
-  	if (isset($_COOKIE['forumLogoutToken']) && isset($_COOKIE['loginRemember'])) {
-  	    $auth_token .= "&remember=" . $_COOKIE['loginRemember'];
-  	}
-  	$embedURL                   = $forumEmbedUrl . '/js/mb/embed.js';
-  	$newURL                     = $forumEmbedUrl . '/js/mb/embed.js' . $auth_token;
-  	$content_changed            = str_replace($embedURL, $newURL, $content);
-  	$build['body'][0]['#text']  = $content_changed;
-  }
-  //alter forum link if not embedded before page render//
-   $checkIfEmbedded = \Drupal::config('node.settings')->get('forum_embedded_option'); 
-   if($checkIfEmbedded != 1 && isset($_COOKIE['forumLogoutToken'])){  
-     function  website_toolbox_forum_link_alter(&$variables){   
-        if($variables['text'] == 'Forum'){  
-           if (isset($_COOKIE['forumLogoutToken'])) { 
-                  $cookie = $_COOKIE['forumLogoutToken'];
-              } elseif (isset($_SESSION['forumLoginAuthToken'])) {
-                  $cookie = $_SESSION['forumLoginAuthToken'];
-              }
-           $variables['options']['query']['authtoken']  = $cookie ;
+ if($forumsEmeddedOption == 1){
+    function website_toolbox_forum_node_view($build) { 
+      	$forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key');
+      	$forumUrl     = \Drupal::config('node.settings')->get('forum_url');
+        $content      =  $build['body'][0]['#text'];
+        if($content){
+          	if (preg_match('#^https?://#', \Drupal::config('node.settings')->get('forum_url'))) {
+          	    $forumUrl = \Drupal::config('node.settings')->get('forum_url');
+          	} else {
+          	    $forumUrl = "http://" . \Drupal::config('node.settings')->get('forum_url');
+          	}
+          	$forumEmbedUrl = preg_replace('#^https?:#i', '', $forumUrl);
+          	$auth_token    = '';
+          	if (isset($_COOKIE['forumLogoutToken'])) {
+          	    $auth_token = "?authtoken=" . $_COOKIE['forumLogoutToken'];
+          	} elseif (isset($_SESSION['forumLoginAuthToken'])) {
+          	    $auth_token = "?authtoken=" . $_SESSION['forumLoginAuthToken'];
+          	}
+          	if (isset($_COOKIE['forumLogoutToken']) && isset($_COOKIE['loginRemember'])) {
+          	    $auth_token .= "&remember=" . $_COOKIE['loginRemember'];
+          	}
+          	$embedURL                   = $forumEmbedUrl . '/js/mb/embed.js';
+          	$newURL                     = $forumEmbedUrl . '/js/mb/embed.js' . $auth_token;
+          	$content_changed            = str_replace($embedURL, $newURL, $content);
+          	$build['body'][0]['#text']  = $content_changed;
         }
       }
+      //alter forum link if not embedded before page render//
+       $checkIfEmbedded = \Drupal::config('node.settings')->get('forum_embedded_option'); 
+       if($checkIfEmbedded != 1 && isset($_COOKIE['forumLogoutToken'])){  
+         function  website_toolbox_forum_link_alter(&$variables){   
+            if($variables['text'] == 'Forum'){  
+               if (isset($_COOKIE['forumLogoutToken'])) { 
+                      $cookie = $_COOKIE['forumLogoutToken'];
+                  } elseif (isset($_SESSION['forumLoginAuthToken'])) {
+                      $cookie = $_SESSION['forumLoginAuthToken'];
+                  }
+               $variables['options']['query']['authtoken']  = $cookie ;
+            }
+          }
+    }
 }
 function website_toolbox_forum_user_login($account){
     $userId = \Drupal::currentUser()->id();
@@ -138,14 +142,12 @@ function website_toolbox_forum_user_update(Drupal\Core\Entity\EntityInterface $e
       $avatarUrl = '';
     }
     $email = $entity->getEmail();
-    $userDetails = array(
-        "email" => $email,
-        "avatarUrl" => $avatarUrl,
-        "username" => $userName,
-        "externalUserid" => $externalUserid,
-        "name" => $userName
-     );
-     $url =  "/users/$userId";
+    $userDetails = array("email" => $email,
+            "avatarUrl" => $avatarUrl,
+            "username" => $userName,
+            "externalUserid" => $externalUserid,
+            "name" => $userName);
+            $url =  "/users/$userId";
      Drupal\website_toolbox_forum\sendApiRequest('POST',$url,$userDetails); 
      Drupal\website_toolbox_forum\assignDivestUserGroup($email, $userName, $assignUserGroups,$removeUserGroups);
 }
@@ -196,10 +198,7 @@ function website_toolbox_forum_user_role_insert(EntityInterface $entity) {
       return;
     }
     $requestUrl = "/usergroups";
-    $userGroupDetails = array(
-        "title"=>$entity->id(),
-        "usertitle"=>$entity->label()
-    ); 
+    $userGroupDetails = array("title"=>$entity->id(),"usertitle"=>$entity->label()); 
     Drupal\website_toolbox_forum\sendApiRequest('POST',$requestUrl,$userGroupDetails);
 }
 function website_toolbox_forum_user_role_update(EntityInterface $entity) {
@@ -208,9 +207,7 @@ function website_toolbox_forum_user_role_update(EntityInterface $entity) {
     } 
     $userGroupId = Drupal\website_toolbox_forum\getUserGroupId($entity->id()); 
     $requestUrl = "/usergroups/".$userGroupId;
-    $userGroupDetails = array(
-        "usertitle"=>$entity->label()
-    ); 
+    $userGroupDetails = array("usertitle"=>$entity->label()); 
     Drupal\website_toolbox_forum\sendApiRequest('POST',$requestUrl,$userGroupDetails);
 }
 

@@ -16,18 +16,16 @@ function website_toolbox_forum_uninstall() {
 	if($existNode){
         $existNode->delete();   
     }
-	$database = \Drupal::database();
-	 
+	$database = \Drupal::database();	 
     $query = $database->query("SELECT * FROM  {menu_link_content_data} where title = 'Forum'");
-    $result = $query->fetchAll();
-  
+    $result = $query->fetchAll();  
     if($result) { 
         $menuId = $result[0]->id;
         $menu_link = MenuLinkContent::load($menuId);
         $menu_link->delete();
         $query = $database->query("delete  FROM  {path_alias} where alias = 'forum'");
     } 
-	 $query = $database->query("delete  FROM  {path_alias} where alias = 'forum'");
+	$query = $database->query("delete  FROM  {path_alias} where alias = 'forum'");
 	\Drupal::service('config.factory')->getEditable('node.settings')->delete();
     setcookie('forumLogoutToken', 0, time() - 3600, "/");
     unset($_COOKIE['forumLogoutToken']);
@@ -35,6 +33,4 @@ function website_toolbox_forum_uninstall() {
     unset($_COOKIE['forumLoginUserid']);
     setcookie('loginRemember', '', time() - 3600, "/");
     unset($_COOKIE['loginRemember']);
-
-
- }?>
+}?>
