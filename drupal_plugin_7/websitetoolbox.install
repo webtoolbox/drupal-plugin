@@ -14,8 +14,8 @@ function WebsiteToolbox_uninstall() {
 		}
 	}
 	$num_deleted = db_delete('url_alias')
-    ->condition('alias', "Forum")
-    ->execute();   
+    	->condition('alias', "Forum")
+   	->execute();   
 	variable_del('forum_api_key'); 
 	variable_del('forum_url'); 
 	variable_del('forum_username'); 
@@ -46,11 +46,11 @@ function  WebsiteToolbox_disable(){
 	variable_del('forum_password'); 
 	variable_del('forum_embedded_option');
 	global $base_path;
-    setcookie('forumLogoutToken', 0, time() - 3600, $base_path);
-    unset($_COOKIE['forumLogoutToken']);
-    setcookie('forumLoginUserid', '', time() - 3600, $base_path);
-    unset($_COOKIE['forumLoginUserid']);
-    setcookie('loginRemember', '', time() - 3600, $base_path);
-    unset($_COOKIE['loginRemember']);
+	setcookie('forumLogoutToken', 0, time() - 3600, $base_path);
+	unset($_COOKIE['forumLogoutToken']);
+	setcookie('forumLoginUserid', '', time() - 3600, $base_path);
+	unset($_COOKIE['forumLoginUserid']);
+	setcookie('loginRemember', '', time() - 3600, $base_path);
+	unset($_COOKIE['loginRemember']);
 }
 ?>
