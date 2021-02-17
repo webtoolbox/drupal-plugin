@@ -137,7 +137,6 @@ function WebsiteToolbox_user_insert(&$edit, $account, $category){
     $result = drupal_http_request($URL, $options);
     if (!$result) {
         drupal_set_message($result->error);
-        die();
     }else{
         $syncOption = variable_get('forum_roles_sync_option');
         if($syncOption == 1){
@@ -252,7 +251,6 @@ function WebsiteToolbox_user_delete($account){
     $result = drupal_http_request($URL, $options);
     if (!$result) {
         drupal_set_message($result->error);
-        die();
     }
 }
 /* check if forum details already exist. If forum already configured*/
