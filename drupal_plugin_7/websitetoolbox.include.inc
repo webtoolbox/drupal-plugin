@@ -64,24 +64,32 @@ function printImageTagLogout(&$data, $elements){
         $img  = '';
         $data = preg_replace('@<body[^>]*>@', '$0' . $img, $data, 1);
     }
+    if (user_is_logged_in() && (isset($_COOKIE['forumLogoutToken']) || isset($_SESSION['forumLoginAuthToken']))) {
+        $loginAuthUrl = $forumUrl . "/register/dologin?authtoken=" . $_SESSION['forumLoginAuthToken'];
+        $loginAuthUrl = preg_replace('#^https?:#i', '', $loginAuthUrl);
+        $img          = '<img src="' . $loginAuthUrl . '" border="0" width="0" height="0" alt="">';
+        $data         = preg_replace('@</body[^>]*>@', '$0' . $img, $data, 1);        
+    } else {
+        $img  = '';
+        $data = preg_replace('@<body[^>]*>@', '$0' . $img, $data, 1);
+    }    
     return $data;
 }
-function getUserid($userEmail){
+function getUserDetails($userEmail){
     if ($userEmail) {
         $data     = array(
             "email" => $userEmail
         );
         $response = sendApiRequest('GET', "/users/", $data);
-        if ($response->{'data'}[0]->{'userId'}) {
-            echo $response->{'data'}[0]->{'userId'};    
-            return $response->{'data'}[0]->{'userId'};
-        }
+        return $response;
     }
 }
-function sendApiRequest($method, $path, $data){
+function sendApiRequest($method, $path, $data = ''){
     $url = WT_API_URL . $path;
     if (strtoupper($method) == "GET") {
-        $url = sprintf("%s?%s", $url, http_build_query($data));
+        if ($data != '') {
+            $url = sprintf("%s?%s", $url, http_build_query($data));
+        }
     }
     $curl = curl_init();
     curl_setopt($curl, CURLOPT_URL, $url);
@@ -93,14 +101,74 @@ function sendApiRequest($method, $path, $data){
     if (strtoupper($method) == "POST") {
         curl_setopt($curl, CURLOPT_POST, true);
         curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
-    } else if (strtoupper($method) == "GET") {
+    } elseif (strtoupper($method) == "GET") {
         curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+    } elseif (strtoupper($method) == "DELETE") {
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
     }
     $response = curl_exec($curl);
     curl_close($curl);
     return json_decode($response);
 }
-
+function getUserGroupByName($userGroupDetails){
+    $UserGroupByName = [];
+    $userGroupId = $userGroupDetails->{'data'}[0]->{'userGroups'};
+    for ($i = 0; $i < count($userGroupId); $i++) {
+        $requestUrl = "/usergroups/" . $userGroupId[$i];
+        $response   = sendApiRequest('GET', $requestUrl);
+        if ($response->{'defaultGroup'} == false) {
+            $userGroupIds                   = $response->{'userGroupId'};
+            $UserGroupByName[$userGroupIds] = $response->{'title'};
+        }
+    }
+    return $UserGroupByName;
+}
+function getUserGroupId($title){
+    $getUserGroupList = getGroupList();
+    for ($i = 0; $i < count($getUserGroupList['data']); $i++) {
+        $userGroupID              = $getUserGroupList['data'][$i]->{"userGroupId"};
+        $userGroups[$userGroupID] = $getUserGroupList['data'][$i]->{"title"};
+    }
+    $userGroupId = array_search($title, $userGroups);
+    return $userGroupId;
+}
+function getGroupList(){
+    $requestUrl = "/usergroups";
+    $limit      = array(
+        "limit" => 100
+    );
+    $response   = (array) sendApiRequest('GET', $requestUrl, $limit);
+    return $response;
+}
+function getCustomUserGroups(){
+    $getUserGroupList = getGroupList();
+    for ($i = 0; $i < count($getUserGroupList['data']); $i++) {
+        if ($getUserGroupList['data'][$i]->{"defaultGroup"} === false) {
+            $userGroupID              = $getUserGroupList['data'][$i]->{"userGroupId"};
+            $userGroups[$userGroupID] = $getUserGroupList['data'][$i]->{"title"};
+        }
+    }
+    return $userGroups;
+}
+function assignDivestUserGroup($userEmail, $username, $userGroupsToAssign = '', $userGroupsToDivest = ''){
+    $userDetails = array(
+        "emailAddresses" => $userEmail,
+        "usernames" => $username
+    );
+    if (!empty($userGroupsToAssign)) {
+        foreach ($userGroupsToAssign as $userGroupsToAssignRoles) {
+            $requestUrl = "/usergroups/" . $userGroupsToAssignRoles . "/users";
+            sendApiRequest('POST', $requestUrl, $userDetails);
+        }
+    }
+    if (!empty($userGroupsToDivest)) {
+        foreach ($userGroupsToDivest as $userGroupsToDivestRoles) {
+            $requestUrl = "/usergroups/" . $userGroupsToDivestRoles . "/users";
+            sendApiRequest('DELETE', $requestUrl, $userDetails);
+        }
+    }
+}
 function setCookieOnLogin($responseArray, $rememberme){
     $persistent = 0;
     if ($rememberme != "") {
@@ -118,7 +186,6 @@ function checkSession(){
         drupal_session_start();
     }
 }
-
 function resetCookieOnLogout(){
     global $base_path;
     setcookie('forumLogoutToken', 0, time() - 3600, $base_path);
@@ -128,7 +195,6 @@ function resetCookieOnLogout(){
     setcookie('loginRemember', '', time() - 3600, $base_path);
     unset($_COOKIE['loginRemember']);
 }
-
 function setForumCookies($cname, $cvalue, $persistent){
     global $base_url;
     global $base_path;
@@ -162,3 +228,22 @@ function unsetLoginSession(){
     unset($_SESSION['forumLoginAuthToken']);
 }
 ?>
+<style>
+.form-item-forum-embedded-option{
+    margin-top: -20px !important;
+    margin-left: 192px !important;
+}
+.form-item-forum-roles-sync-option{
+    margin-top: -20px !important;
+    margin-left: 192px !important;
+    
+}
+.form-item-forum-embedded-option .description{
+    font-weight: 100;
+    margin-left: 0px !important;
+}
+.form-item-forum-roles-sync-option .description{
+    margin-left: 0px !important;
+    font-weight: 100;
+}
+</style>
