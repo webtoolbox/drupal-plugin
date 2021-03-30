@@ -1,75 +1,92 @@
 <?php
-include("websitetoolbox.include.inc");
-const WT_SETTINGS_URL = 'https://www.websitetoolbox.com/tool/members/mb/settings';
-const WT_API_URL = 'https://api.websitetoolbox.com/v1/api';
+module_load_include('inc', 'websitetoolbox', 'websitetoolbox.include');
+const WT_SETTINGS_URL = 'https://beta.websitetoolbox.com/tool/members/mb/settings';
+const WT_API_URL = 'https://api.websitetoolbox.com/dev/api';
 /** * Implements hook_menu for backend settings page().Create "configuration link for custom module" in administartor */
-function WebsiteToolbox_menu(){
-    $items                                        = array();
-    $items['admin/config/setting/websitetoolbox'] = array(
-        'title' => t('Configuration of Website Toolbox Forum'),
-        'description' => t('Configure the Website Toolbox module'),
-        'page callback' => 'drupal_get_form',
-        'page arguments' => array(
-            'websiteToolboxSettings\adminConfigPageLayout'
+function websitetoolbox_menu(){   
+    $items['admin/config/websitetoolbox'] = array(
+        'title'             => t('Configuration of Website Toolbox Forum'),
+        'description'       => t('Configure the Website Toolbox module'),
+        'page callback'     => 'drupal_get_form',
+        'page arguments'    => array(
+            'websitetoolbox_admin_form'
         ),
         'access arguments' => array(
             'administer Website Toolbox Forum settings'
         ),
-        'file' => 'websitetoolbox.admin.inc',
-        'type' => MENU_NORMAL_ITEM
+        'file' => 'websitetoolbox.admin.inc'        
     );
     return $items;
 }
+function websitetoolbox_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#websitetoolbox':
+      $output = '';
+      $output .= '<h3>' . t('About Website Toolbox Forum') . '</h3>';
+      $output .= '<p>' . t('Your Drupal forum doesn’t need to be basic. Website Toolbox is a cloud-based forum plugin that allows you to easily add a powerful, intuitive, and maintenance-free forum to Drupal without slowing it down. No database, servers, or coding required');
+      $output .= '<h3>' . t('How to Configure Website Toolbox Forum') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t('A. Go to Modules >> Website Toolbox Forum >> Configure.') . '</dt>';
+      $output .= '<dt>' . t('B. Enter your Website Toolbox account information') . '</dt>';
+      $output .= '<dt>' . t('C. Select option to embedded/non-embedded forum') . '</dt>';
+      $output .= '<dd></dd>';
+      $output .= '<dd>' . t('<b>a. Embedded: </b> Forum will be displayed on a website page as a "forum".') . '</dd>';
+      $output .= '<dd>' . t('<b>b. Non-embedded: </b>Will create a menu link but will take you to the forum page(https://yourforum.discussion.community)') . '</dd>';
+      $output .= '<dt>' . t('D. Choose your setting and save configuration') . '</dt><dd></dd>';
+      $output .= '<dt>' . t('<b>For more details please visit below link:</b>') . '</dt>';
+      $output .= '<dt>' . t('<a href="https://www.websitetoolbox.com/blog/drupal-forum-module-829">Website Toolbox Forum Example Screencast</a>') . '</dt>';
+      $output .= '</dl>';
+      return $output;   
+    }
+}
 /** * Implements hook_permission(). Implements hook_menu for backend settings page().Create "permission link for custom module in administartor" */
-function WebsiteToolbox_permission(){
+function websitetoolbox_permission(){
     return array(
-        'administer WebsiteToolbox settings' => array(
-            'title' => t('Administer Website Toolbox configurations'),
-            'restrict access' => true
+        'administer Website Toolbox Forum settings' => array(
+            'title' => t('administer Website Toolbox Forum settings'),             
         )
     );
 }
-/*check if embedded is enable/disable in configuration*/
-$checkIfEmbedded = variable_get('forum_embedded_option');
-
 /*append forum link with authtoken after user logged in Case embedded disbale*/
-if (user_is_logged_in() && $checkIfEmbedded != 1) {
-    function WebsiteToolbox_url_outbound_alter(&$path, &$options, $originalPath)
-    {
+function websitetoolbox_url_outbound_alter(&$path, &$options, $originalPath){  
+    $checkIfEmbedded    = variable_get('websitetoolbox_embedded_option');
+    $forumUrl           = variable_get('websitetoolbox_embedded_option');
+    if (user_is_logged_in() && $checkIfEmbedded != 1) {
         if (isset($options['title']) && ($options['title'] == 'Forum')) {
-            if (isset($_COOKIE['forumLogoutToken'])) {
-                $cookie = $_COOKIE['forumLogoutToken'];
-            } elseif (isset($_SESSION['forumLoginAuthToken'])) {
-                $cookie = $_SESSION['forumLoginAuthToken'];
+            if (isset($_COOKIE['websitetoolboxLogoutToken'])) {
+                $cookie = $_COOKIE['websitetoolboxLogoutToken'];
+            } elseif (isset($_SESSION['websitetoolboxLoginAuthToken'])) {
+                $cookie = $_SESSION['websitetoolboxLoginAuthToken'];
             }
             $options['query']['authtoken'] = $cookie;
         }
     }
+} 
+/*drupal hook to show forum after user logged in. Append embedded forum url with authtoken*/
+function Websitetoolbox_page_alter(&$page){
+    $page['#post_render'][] = 'websitetoolbox_logout_image_tag';
 }
- 
-    /*drupal hook to show forum after user logged in. Append embedded forum url with authtoken*/
-    function WebsiteToolbox_page_alter(&$page){
-        $page['#post_render'][] = 'WebsiteToolboxSSO\printImageTagLogout';
-    }
-    if (user_is_logged_in() && $checkIfEmbedded == 1) { 
-        function WebsiteToolbox_node_view_alter(&$page){
-            $forumsApiKey = variable_get('forum_api_key');
-            $forumUrl     = variable_get('forum_url');
+function websitetoolbox_node_view_alter(&$page){
+    if(!drupal_is_front_page()){
+        $checkIfEmbedded = variable_get('websitetoolbox_embedded_option');
+        if (user_is_logged_in() && $checkIfEmbedded == 1) { 
+            $forumsApiKey = variable_get('websitetoolbox_forum_api_key');
+            $forumUrl     = variable_get('websitetoolbox_forum_url');
             $content      = $page['body']['#object']->body['und'][0]['value'];
-            if (preg_match('#^https?://#', variable_get('forum_url'))) {
-                $forumUrl = variable_get('forum_url');
+            if (preg_match('#^https?://#', variable_get('websitetoolbox_forum_url'))) {
+                $forumUrl = variable_get('websitetoolbox_forum_url');
             } else {
-                $forumUrl = "http://" . variable_get('forum_url');
+                $forumUrl = "http://" . variable_get('websitetoolbox_forum_url');
             }
             $forumEmbedUrl = preg_replace('#^https?:#i', '', $forumUrl);
             $auth_token    = '';
-            if (isset($_COOKIE['forumLogoutToken'])) {
-                $auth_token = "?authtoken=" . $_COOKIE['forumLogoutToken'];
-            } elseif (isset($_SESSION['forumLoginAuthToken'])) {
-                $auth_token = "?authtoken=" . $_SESSION['forumLoginAuthToken'];
+            if (isset($_COOKIE['websitetoolboxLogoutToken'])) {
+                $auth_token = "?authtoken=" . $_COOKIE['websitetoolboxLogoutToken'];
+            } elseif (isset($_SESSION['websitetoolboxLoginAuthToken'])) {
+                $auth_token = "?authtoken=" . $_SESSION['websitetoolboxLoginAuthToken'];
             }
-            if (isset($_COOKIE['forumLogoutToken']) && isset($_COOKIE['loginRemember'])) {
-                $auth_token .= "&remember=" . $_COOKIE['loginRemember'];
+            if (isset($_COOKIE['websitetoolboxLogoutToken']) && isset($_COOKIE['websitetoolboxLoginRemember'])) {
+                $auth_token .= "&remember=" . $_COOKIE['websitetoolboxLoginRemember'];
             }
             $embedURL                   = $forumEmbedUrl . '/js/mb/embed.js';
             $newURL                     = $forumEmbedUrl . '/js/mb/embed.js' . $auth_token;
@@ -77,120 +94,163 @@ if (user_is_logged_in() && $checkIfEmbedded != 1) {
             $page['body'][0]['#markup'] = $content_changed;
         }
     }
-
-function WebsiteToolbox_user_login(&$edit, $account){
+}
+function websitetoolbox_user_login(&$edit, $account){
     global $user;
-    WebsiteToolboxSSO\checkSession();
-    $getAuthDetails = WebsiteToolboxSSO\getForumAuthtoken($user, "login");
-    WebsiteToolboxSSO\setCookieOnLogin($getAuthDetails, "");
-    WebsiteToolboxSSO\saveAuthToken($getAuthDetails['authtoken'], $getAuthDetails['forumUserid']);
+    websitetoolbox_check_session();
+    $getAuthDetails = websitetoolbox_get_forum_authtoken($user, "login");
+    websitetoolbox_set_cookie_on_login($getAuthDetails, "");
+    websitetoolbox_save_authtoken($getAuthDetails['authtoken'], $getAuthDetails['forumUserid']);
     drupal_static_reset();
     drupal_flush_all_caches();
 }
-
-function WebsiteToolbox_user_insert(&$edit, $account, $category){
-    $username = $_POST['name'];
-    $email    = $_POST['mail'];
-    $pass     = $_POST['pass'];
-    $userId   = $account->uid;
-    $userData = (object) array(
+function websitetoolbox_user_insert(&$edit, $account, $category){  var_dump($account);exit;
+    $username  = $account->{'name'};
+    $email     = $account->{'mail'};
+    $pass      = $account->{'pass'};
+    $userId    = $account->uid;
+    $userData  = (object) array(
         'name' => $username,
         'mail' => $email,
         'pass' => $pass,
         'externalUserid' => $userId
     );
-    if (isset($_POST['pass1']) && $_POST['pass1'] != "") {
-        $password = $_POST['pass1'];
+    if (isset($account->{'pass'}) && $account->{'pass'} != "") {
+        $password = $account->{'pass'};
     } else {
         $password = '';
     }
     // Fields array.
-    $forumsApiKey = variable_get('forum_api_key');
-    $forumUrl     = variable_get('forum_url');
+    $forumsApiKey = variable_get('websitetoolbox_forum_api_key');
+    $forumUrl     = variable_get('websitetoolbox_forum_url');
     $URL          = $forumUrl . "/register/create_account/";
     $data         = array(
-        'apikey' => $forumsApiKey,
-        'member' => $username,
-        'email' => $email,
-        'externalUserid' => $userId
+        'apikey'            => $forumsApiKey,
+        'member'            => $username,
+        'email'             => $email,
+        'externalUserid'    => $userId
     );
     $options      = array(
-        'type' => 'json',
-        'method' => 'POST',
-        'data' => drupal_http_build_query($data),
-        'timeout' => 15
-    );
-    
+        'type'      => 'json',
+        'method'    => 'POST',
+        'data'      => drupal_http_build_query($data),
+        'timeout'   => 15
+    );    
     $result = drupal_http_request($URL, $options);
     if (!$result) {
         drupal_set_message($result->error);
         die();
+    }else{
+        $syncOption = variable_get('websitetoolbox_roles_sync_option');
+        if($syncOption == 1){
+            $roles = [];
+            $userRoleIds = $account->roles;
+            foreach($userRoleIds as $userRoleId){
+                $getUserRolesDetails        = user_role_load($userRoleId);
+                if(!empty($getUserRolesDetails)){
+                    $roles[]                = $getUserRolesDetails->{'name'};
+                }
+            }             
+            $userGroupId        = websitetoolbox_get_custom_user_group(); 
+            $customUserGroups   = array_keys(array_intersect($userGroupId,$roles));
+            websitetoolbox_assign_divest_user_group($email, $username, $customUserGroups);
+        }
     }
-    WebsiteToolboxSSO\checkSession();
-    $getAuthDetails = WebsiteToolboxSSO\getForumAuthtoken($userData, "register");
-    WebsiteToolboxSSO\setCookieOnLogin($getAuthDetails, "");
-    WebsiteToolboxSSO\saveAuthToken($getAuthDetails['authtoken'], $getAuthDetails['forumUserid']);
+    if(!$edit['administer_users']){ 
+        websitetoolbox_check_session();
+        $getAuthDetails = websitetoolbox_get_forum_authtoken($userData, "register");
+        websitetoolbox_set_cookie_on_login($getAuthDetails, "");
+        websitetoolbox_save_authtoken($getAuthDetails['authtoken'], $getAuthDetails['forumUserid']);
+    }
     drupal_static_reset();
     drupal_flush_all_caches();
 }
-function WebsiteToolbox_user_presave(&$edit, $account, $category){
+function websitetoolbox_user_presave(&$edit, $account, $category){
     $_SESSION['oldUserEmail'] = $account->mail;
 }
-function WebsiteToolbox_user_update(&$edit, $account, $category){
+function websitetoolbox_user_update(&$edit, $account, $category){
     global $user; 
-    $forumsApiKey   = variable_get('forum_api_key');
-    $forumUrl       = variable_get('forum_url');
+    $forumsApiKey   = variable_get('websitetoolbox_forum_api_key');
+    $forumUrl       = variable_get('websitetoolbox_forum_url');
     $LoggedinUserid = $user->uid;
-    $dProfileUserid = $edit['uid'];
+    $dProfileUserid = $account->uid;  
     $emailToVerify  = $_SESSION['oldUserEmail'];
     // change updated userid if admin update other user profile else get update userid from the cookie.
     // WTB logged-in userid store in the cookie when user logged-in on the WordPress website.
     if ($LoggedinUserid != $dProfileUserid) { 
+        //user edit by admin
         $externalUserid = $edit['uid'];
         $email          = $edit['mail'];
         $userName       = $edit['name'];
         $avatar         = $edit['picture'];
         $author         = user_load($edit['uid']);
     } else {
+        //edit profile by user
         $externalUserid = $account->uid; 
         $email          = $edit['mail'];
         $userName       = $edit['name'];
         $avatar         = $edit['picture'];
         $author         = user_load($account->uid);
     }
-    $userId     = WebsiteToolboxSSO\getUserid($emailToVerify);
-    $author     = user_load($account->uid);
-    $avatar_url = file_create_url($author->picture->uri);
+    $websitetoolbox_get_user_details     = websitetoolbox_get_user_details($emailToVerify);
+    $userGroupId = $websitetoolbox_get_user_details->{'data'}[0]->{'userGroups'};
+    if ($websitetoolbox_get_user_details->{'data'}[0]->{'userId'}) {
+        $userId = $websitetoolbox_get_user_details->{'data'}[0]->{'userId'};
+    }
+    if($account->picture->uri != ''){
+        $avatar_url = file_create_url($account->picture->uri);
+    } 
     // Update user data on the forum.
     if ($userId) {
         $data = array(
-            "email" => $email,
-            "avatarUrl" => $avatar_url,
-            "username" => $userName,
-            "externalUserid" => $externalUserid,
-            "name" => $userName
+            "email"             => $email,
+            "avatarUrl"         => $avatar_url,
+            "username"          => $userName,
+            "externalUserid"    => $externalUserid,
+            "name"              => $userName
         );
-        
-        WebsiteToolboxSSO\sendApiRequest('POST', "/users/$userId", $data);
+        websitetoolbox_send_api_request('POST', "/users/$userId", $data);
+        $syncOption = variable_get('websitetoolbox_roles_sync_option');
+        if($syncOption == 1){
+            $roles              = [];
+            $removeUserGroups   = [];
+            $assignUserGroups   = [];
+            $userRoleIds        = $account->roles;
+            if(!empty($userRoleIds)){
+                foreach($userRoleIds as $userRoleId){
+                    $getUserRolesDetails        = user_role_load($userRoleId);
+                    if(!empty($getUserRolesDetails)){
+                        $roles[]                = $getUserRolesDetails->{'name'};
+                    }
+                } 
+            }
+            $userGroupByName = websitetoolbox_user_group_by_name($websitetoolbox_get_user_details);  
+            if(!empty($roles)){
+                $assignUserGroups = array_diff($roles, $userGroupByName);  
+            } 
+            if(!empty($userGroupByName)){
+                $removeUserGroups = array_keys(array_diff($userGroupByName,$roles));
+            } 
+            websitetoolbox_assign_divest_user_group($email, $userName, $assignUserGroups,$removeUserGroups); 
+        }
     }
 }
-function WebsiteToolbox_user_delete($account){
+function websitetoolbox_user_delete($account){
     $username     = $account->name;
-    $forumsApiKey = variable_get('forum_api_key');
-    $forumUrl     = variable_get('forum_url');
+    $forumsApiKey = variable_get('websitetoolbox_forum_api_key');
+    $forumUrl     = variable_get('websitetoolbox_forum_url');
     $URL          = $forumUrl . "/register";
     $data         = array(
-        'apikey' => $forumsApiKey,
-        'massaction' => 'decline_mem',
+        'apikey'    => $forumsApiKey,
+        'massaction'=> 'decline_mem',
         'usernames' => $username
     );
     $options      = array(
-        'type' => 'json',
-        'method' => 'POST',
-        'data' => drupal_http_build_query($data),
-        'timeout' => 15
-    );
-    
+        'type'      => 'json',
+        'method'    => 'POST',
+        'data'      => drupal_http_build_query($data),
+        'timeout'   => 15
+    );    
     $result = drupal_http_request($URL, $options);
     if (!$result) {
         drupal_set_message($result->error);
@@ -198,7 +258,49 @@ function WebsiteToolbox_user_delete($account){
     }
 }
 /* check if forum details already exist. If forum already configured*/
-function checkForumExist(){
+function websitetoolbox_checkforum_exist(){
     $nodeResult = (new EntityFieldQuery())->entityCondition('entity_type', 'node')->propertyCondition('title', 'Forum')->execute();
     return $nodeResult;
+}
+function websitetoolbox_existing_user_login(){ 
+    global $user;
+    $getAuthDetails = websitetoolbox_get_forum_authtoken($user, "login");
+    websitetoolbox_set_cookie_on_login($getAuthDetails, "");
+    websitetoolbox_save_authtoken($getAuthDetails['authtoken'], $getAuthDetails['forumUserid']);
+}
+function websitetoolbox_user_role_insert($role) { 
+    $syncOption = variable_get('websitetoolbox_roles_sync_option');
+    if($syncOption == 1){
+        $forumGroupId           = array();
+        $forumGroupId           = variable_get('websitetoolbox_forum_userGroupId'); 
+        $data                   = array("title"=>$role->{'name'},"usertitle"=>$role->{'name'}); 
+        $result                 = websitetoolbox_send_api_request('POST', "/usergroups", $data);
+        $roleId                 = $role->{'rid'};
+        $forumGroupId[$roleId]  = $result->{'userGroupId'};
+        variable_set('websitetoolbox_forum_userGroupId', $forumGroupId);
+    }
+ }
+ 
+function websitetoolbox_user_role_update($role) { 
+    $syncOption = variable_get('websitetoolbox_roles_sync_option');
+    if($syncOption == 1){
+        $forumGroupId = variable_get('websitetoolbox_forum_userGroupId'); 
+        foreach ($forumGroupId as $key => $value) {
+            if($key == $role->{'rid'} )
+            {
+                $userGroupId = $value;
+            }
+        } 
+        $requestUrl         = "/usergroups/".$userGroupId; 
+        $userGroupDetails   = array("title"=>$role->{'name'},"usertitle"=>$role->{'name'}); 
+        websitetoolbox_send_api_request('POST',$requestUrl,$userGroupDetails);
+    }
+}
+function websitetoolbox_user_role_delete($role) {
+    $syncOption = variable_get('websitetoolbox_roles_sync_option');
+    if($syncOption == 1){
+      $userGroupId  = websitetoolbox_user_group_id($role->{'name'}); 
+      $requestUrl   = "/usergroups/".$userGroupId;
+      websitetoolbox_send_api_request('DELETE',$requestUrl);
+    }
 }
