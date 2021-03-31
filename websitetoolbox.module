@@ -1,7 +1,7 @@
 <?php
 module_load_include('inc', 'websitetoolbox', 'websitetoolbox.include');
-const WT_SETTINGS_URL = 'https://beta.websitetoolbox.com/tool/members/mb/settings';
-const WT_API_URL = 'https://api.websitetoolbox.com/dev/api';
+const WT_SETTINGS_URL = 'https://www.websitetoolbox.com/tool/members/mb/settings';
+const WT_API_URL = 'https://api.websitetoolbox.com/v1/api';
 /** * Implements hook_menu for backend settings page().Create "configuration link for custom module" in administartor */
 function websitetoolbox_menu(){   
     $items['admin/config/websitetoolbox'] = array(
