@@ -1,0 +1,21 @@
+<?php   
+function WebsiteToolbox_uninstall() {   
+	variable_del('websitetoolbox_forum_api_key'); 
+	variable_del('websitetoolbox_forum_url'); 
+	variable_del('websitetoolbox_forum_username'); 
+	variable_del('websitetoolbox_forum_password'); 
+	variable_del('websitetoolbox_embedded_option'); 
+}
+function  WebsiteToolbox_disable(){
+	$nid           = variable_get("websitetoolbox_nodeId");
+	$node          = node_load($nid);
+    $node->status  = 0;
+    node_save($node); 
+    $expiration = (int) time() + (86400 * 365);
+    setcookie('websitetoolboxLogoutToken','',$expiration,"/");
+    unset($_COOKIE['websitetoolboxLogoutToken']);
+    setcookie('websitetoolboxLoginUserid', '',$expiration,"/");
+    unset($_COOKIE['websitetoolboxLoginUserid']);
+    setcookie('websitetoolboxLoginRemember', '',$expiration,"/");
+    unset($_COOKIE['websitetoolboxLoginRemember']);
+}

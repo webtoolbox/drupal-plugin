@@ -1,0 +1,17 @@
+.form-item-websitetoolbox-embedded-option{
+    margin-top: -20px !important;
+    margin-left: 192px !important;
+}
+.form-item-websitetoolbox-roles-sync-option{
+    margin-top: -20px !important;
+    margin-left: 192px !important;
+    
+}
+.form-item-websitetoolbox-embedded-option .description{
+    font-weight: 100;
+    margin-left: 0px !important;
+}
+.form-item-websitetoolbox-roles-sync-option .description{
+    margin-left: 0px !important;
+    font-weight: 100;
+}
