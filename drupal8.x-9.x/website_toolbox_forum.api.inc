@@ -1,6 +1,18 @@
 <?php
 namespace Drupal\website_toolbox_forum;
 const WT_API_URL = 'https://api.websitetoolbox.com/v1/api';
+/* Resolve the API gateway base URL from the configured forum address.
+   Beta forums (betaN.websitetoolbox.com) authenticate against their own
+   gateway stage (api.websitetoolbox.com/betaN/api); live forums use the
+   production stage (v1). */
+function getApiBaseUrl(){
+    $forumUrl = \Drupal::config('node.settings')->get('forum_url', '');
+    $host = parse_url($forumUrl, PHP_URL_HOST);
+    if ($host && preg_match('/^beta([0-9]+)\.websitetoolbox\.com$/', $host, $matches)) {
+        return 'https://api.websitetoolbox.com/beta' . $matches[1] . '/api';
+    }
+    return WT_API_URL;
+}
 function getForumAuthtoken($user, $type){
     $forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key');
     $forumUrl     = \Drupal::config('node.settings')->get('forum_url');
@@ -39,7 +51,7 @@ function saveAuthToken($authtoken, $forumUserid){
 function getUserDetails($userEmail){
     if ($userEmail) {
         $userEmailDetail = array('email' => $userEmail);
-        $url = WT_API_URL."/users/";
+        $url = getApiBaseUrl()."/users/";
         $response = sendApiRequest('GET', "/users/", $userEmailDetail);
         return $response;
     }
@@ -111,7 +123,7 @@ function assignDivestUserGroup($userEmail, $username, $userGroupsToAssign ='', $
     }
 }
 function sendApiRequest($method, $requestPath, $requestData = ''){
-    $requestUrl = WT_API_URL . $requestPath;
+    $requestUrl = getApiBaseUrl() . $requestPath;
      if (strtoupper($method) == "GET") {
         if($requestData != ''){
             $requestUrl = sprintf("%s?%s", $requestUrl, http_build_query($requestData));
