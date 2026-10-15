@@ -27,6 +27,14 @@ class WebsitetoolboxSync extends FormBase {
             '#type' => 'markup',
             '#markup' => $html
         );
+        $form['#attached']['html_head'][] = array(
+            array(
+                '#tag' => 'style',
+                '#value' => '.description{ margin-left: 191px !important; }',
+                '#attributes' => array(),
+            ),
+            'website_toolbox_forum:form_style',
+        );
         if (isset($_SESSION['flag']) && ($_SESSION['flag'] == 1)) { 
             $getUserName            = \Drupal::config('node.settings')->get('forum_username', "");
             $html_error             = '<div class="messages messages--error">The username '.$getUserName.' does not exist. Try a different username or email address.</div>';
@@ -190,13 +198,13 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
     \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_url', $forumUrl)->save();
      if ($forumUrl) { 
         $database = \Drupal::database();
-        $query      = \Drupal::entityQuery('node')->condition('title', 'Forum');
+        $query      = \Drupal::entityQuery('node')->accessCheck(FALSE)->condition('title', 'Forum');
         $nids       = $query->execute();
         $getNodeArray = array_keys($nids);
         $getRevisionNodeID = array_shift($getNodeArray); 
-        $existNode = Node::load($getRevisionNodeID);
+        $existNode = $getRevisionNodeID ? Node::load($getRevisionNodeID) : NULL;
         $getNodeId = array_values($nids);
-        $nodeId = 'internal:/node/'.$getNodeId[0];
+        $nodeId = 'internal:/node/'.($getNodeId[0] ?? '');
         if($existNode){
             $existNode->delete();   
         }  
@@ -236,9 +244,13 @@ function createEmbeddedForum($response, $forumEmbeddedOption,$nids){
         'menu_name' => 'main',
         'expanded' => TRUE,]);
     $menuLink->save();
-    $path = \Drupal::service('path.alias_storage')->save("/node/" . $nodeId, "/forum", 'und');
+    saveForumPathAlias("/node/" . $nodeId, "/forum");
     drupal_static_reset();
-    drupal_flush_all_caches();  
+    // drupal_flush_all_caches() removed: without the $kernel argument it rebuilds
+    // the container mid-request, replacing the session service; SessionManager
+    // then treats the in-flight session as obsolete and destroys/never-saves it,
+    // logging the user out. Entity saves already invalidate the relevant caches
+    // via cache tags (node, menu_link_content), so a full flush is unnecessary.
 }
 /*Update forum url and login/logout url on forum server configuration*/
 function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
@@ -261,12 +273,20 @@ function createForumMenuUrl($response,$nids){
     $forumUrl = $response->forumAddress;
     $menuLink = MenuLinkContent::create(['title' => 'Forum','link' => ['uri' => $forumUrl],'menu_name' => 'main','expanded' => TRUE,]);
     $menuLink->save();     
-    $path = \Drupal::service('path.alias_storage')->save("/".$forumUrl, "/forum", 'und');
+    saveForumPathAlias("/".$forumUrl, "/forum");
     drupal_static_reset();
-    drupal_flush_all_caches();      
+    // drupal_flush_all_caches() removed: without the $kernel argument it rebuilds
+    // the container mid-request, replacing the session service; SessionManager
+    // then treats the in-flight session as obsolete and destroys/never-saves it,
+    // logging the user out. Entity saves already invalidate the relevant caches
+    // via cache tags (node, menu_link_content), so a full flush is unnecessary.
 }
-echo "<style>
-.description{
-   margin-left: 191px !important;
+/*Save a path alias for a system path, replacing any existing alias for it.
+ * Replaces the path.alias_storage service, which no longer exists in Drupal 10.*/
+function saveForumPathAlias($path, $alias){
+    $storage = \Drupal::entityTypeManager()->getStorage('path_alias');
+    foreach ($storage->loadByProperties(['path' => $path]) as $existingAlias) {
+        $existingAlias->delete();
+    }
+    $storage->create(['path' => $path, 'alias' => $alias, 'langcode' => 'und'])->save();
 }
-</style>";

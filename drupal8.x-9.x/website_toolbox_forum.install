@@ -8,7 +8,7 @@ use Drupal\Core\Database\Database;
 
 function website_toolbox_forum_uninstall() {
 	$wtbForumUrl = \Drupal::config('node.settings')->get('forum_url');
-	$query = \Drupal::entityQuery('node')->condition('title', 'Forum');
+	$query = \Drupal::entityQuery('node')->accessCheck(FALSE)->condition('title', 'Forum');
     $nids = $query->execute();  
 	$getNodeArray = array_keys($nids);
     $getNodeID = array_shift($getNodeArray);
@@ -23,9 +23,9 @@ function website_toolbox_forum_uninstall() {
         $menuId = $result[0]->id;
         $menu_link = MenuLinkContent::load($menuId);
         $menu_link->delete();
-        $query = $database->query("delete  FROM  {path_alias} where alias = 'forum'");
+        $query = $database->query("delete  FROM  {path_alias} where alias in ('forum', '/forum')");
     } 
-	$query = $database->query("delete  FROM  {path_alias} where alias = 'forum'");
+	$query = $database->query("delete  FROM  {path_alias} where alias in ('forum', '/forum')");
 	\Drupal::service('config.factory')->getEditable('node.settings')->delete();
     setcookie('forumLogoutToken', 0, time() - 3600, "/");
     unset($_COOKIE['forumLogoutToken']);

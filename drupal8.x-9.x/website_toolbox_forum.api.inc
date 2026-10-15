@@ -46,7 +46,10 @@ function getUserDetails($userEmail){
 } 
 function getUserGroupByName($userGroupDetails){
     $UserGroupByName = [];
-    $userGroupId = $userGroupDetails->{'data'}[0]->{'userGroups'};
+    $userGroupId = $userGroupDetails->{'data'}[0]->{'userGroups'} ?? [];
+    if (!is_array($userGroupId)) {
+        return $UserGroupByName;
+    }
     for($i=0; $i<count($userGroupId);$i++){
         $requestUrl = "/usergroups/".$userGroupId[$i];
         $response = sendApiRequest('GET',$requestUrl); 
@@ -59,9 +62,14 @@ function getUserGroupByName($userGroupDetails){
 }
 function getUserGroupId($title){
     $getUserGroupList = getGroupList();
-    for($i=0; $i< count($getUserGroupList['data']);$i++){
-        $userGroupID =  $getUserGroupList['data'][$i]->{"userGroupId"};
-        $userGroups[$userGroupID] = $getUserGroupList['data'][$i]->{"title"};
+    $userGroups = [];
+    $groupListData = $getUserGroupList['data'] ?? [];
+    if (!is_array($groupListData)) {
+        return FALSE;
+    }
+    for($i=0; $i< count($groupListData);$i++){
+        $userGroupID =  $groupListData[$i]->{"userGroupId"};
+        $userGroups[$userGroupID] = $groupListData[$i]->{"title"};
     }  
     $userGroupId = array_search($title,$userGroups);
     return $userGroupId;
@@ -74,23 +82,28 @@ function getGroupList(){
 }
 function getCustomUserGroups(){
     $getUserGroupList = getGroupList();
-    for($i=0; $i< count($getUserGroupList['data']);$i++){
-        if($getUserGroupList['data'][$i]->{"defaultGroup"} === false){
-            $userGroupID =  $getUserGroupList['data'][$i]->{"userGroupId"};
-            $userGroups[$userGroupID] =  $getUserGroupList['data'][$i]->{"title"};
+    $userGroups = [];
+    $groupListData = $getUserGroupList['data'] ?? [];
+    if (!is_array($groupListData)) {
+        return $userGroups;
+    }
+    for($i=0; $i< count($groupListData);$i++){
+        if($groupListData[$i]->{"defaultGroup"} === false){
+            $userGroupID =  $groupListData[$i]->{"userGroupId"};
+            $userGroups[$userGroupID] =  $groupListData[$i]->{"title"};
         }
     }  
     return $userGroups;
  }
 function assignDivestUserGroup($userEmail, $username, $userGroupsToAssign ='', $userGroupsToDivest = '' ){ 
     $userDetails = array("emailAddresses"=>$userEmail,"usernames"=>$username);
-    if(!empty($userGroupsToAssign)){echo "lllll";
+    if(!empty($userGroupsToAssign)){
       foreach ($userGroupsToAssign as $userGroupsToAssignRoles) {
         $requestUrl = "/usergroups/".$userGroupsToAssignRoles."/users";
         sendApiRequest('POST',$requestUrl,$userDetails); 
       }
     }
-    if(!empty($userGroupsToDivest)){echo "222";
+    if(!empty($userGroupsToDivest)){
       foreach ($userGroupsToDivest as $userGroupsToDivestRoles) {
          $requestUrl = "/usergroups/".$userGroupsToDivestRoles."/users";
          sendApiRequest('DELETE',$requestUrl,$userDetails); 
@@ -137,12 +150,13 @@ function setCookieOnLogin($responseArray, $rememberme){
     return true;
 }
 function resetCookieOnLogout(){
+    // Expire the cookies in the browser only. Do NOT unset $_COOKIE here:
+    // hook_page_bottom runs before the menu/node render in the same request,
+    // and wiping the superglobal made later hooks (link_alter, node_view)
+    // miss the authtoken.
     setcookie('forumLogoutToken', 0, time() - 3600, "/");
-    unset($_COOKIE['forumLogoutToken']);
     setcookie('forumLoginUserid', '', time() - 3600, "/");
-    unset($_COOKIE['forumLoginUserid']);
     setcookie('loginRemember', '', time() - 3600, "/");
-    unset($_COOKIE['loginRemember']);
 }
 function setForumCookies($cname, $cvalue, $persistent){
     if ($persistent == 1) {
