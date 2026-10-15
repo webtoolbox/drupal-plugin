@@ -188,9 +188,8 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
         'password' => $forumPassword,
         'login_page_url' => $base_url . "/?q=user",
         'logout_page_url' => $base_url . "/?q = user/logout",
-        'registration_url' => $base_url . "/?q=user/register",],
-        'headers' => ['Content-type' => 'application/json',
-    ]])->getBody()->getContents(); 
+        'registration_url' => $base_url . "/?q=user/register",]
+        ])->getBody()->getContents(); 
     $response = json_decode($request);
     $forumUrl = $response->forumAddress; 
     $forumApiKey = $response->forumApiKey; 

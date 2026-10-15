@@ -176,11 +176,12 @@ function setForumCookies($cname, $cvalue, $persistent){
     } else {
         $expiration = 0;
     }
-// Pass param in setcookie function as a array if php version is 7.3 or above, to overcome the waring return on wordpress website.
+// Use the options-array form (PHP 7.3+) so SameSite/Secure are proper cookie
+// options; stuffing them into the path argument is a ValueError fatal on PHP 8.
     if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
-        setcookie($cname, $cvalue, $expiration, "/" . " ; SameSite=None; Secure;");
+        setcookie($cname, $cvalue, ['expires' => $expiration, 'path' => '/', 'samesite' => 'None', 'secure' => TRUE]);
     } else {
-        setcookie($cname, $cvalue, $expiration,'/');
+        setcookie($cname, $cvalue, ['expires' => $expiration, 'path' => '/']);
     }
 }
 function unsetLoginSession(){

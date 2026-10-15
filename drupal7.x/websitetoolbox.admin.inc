@@ -153,10 +153,7 @@ function websitetoolbox_get_forum_details($forumUsername, $forumPassword, $forum
         'type'          => 'json',
         'method'        => 'POST',
         'data'          => drupal_http_build_query($data),
-        'timeout'       => 15,
-        'headers'       => array(
-        'Content-Type'  => 'application/json'
-        )
+        'timeout'       => 15
     );
     $result           = drupal_http_request(WT_SETTINGS_URL, $options);
     $response         = json_decode($result->data);
