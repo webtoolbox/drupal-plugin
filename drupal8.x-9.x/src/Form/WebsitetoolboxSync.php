@@ -172,7 +172,7 @@ class WebsitetoolboxSync extends FormBase {
     \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_roles_sync_option',$userRolesSyncOption)->save();
     checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption);  
     existingUserForumLogin();
-    $urlRedirect      = explode("?",$_SERVER['HTTP_REFERER']);
+    $urlRedirect      = explode("?", $_SERVER['HTTP_REFERER'] ?? '');
     header("location:" . $urlRedirect[0]);
     exit();      
   }
@@ -226,7 +226,7 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
         }
     }else{
         $_SESSION['flag'] = 1;
-        $urlRedirect      = $_SERVER['HTTP_REFERER'];
+        $urlRedirect      = $_SERVER['HTTP_REFERER'] ?? '';
         header("location:" . $urlRedirect);
         exit();
     }

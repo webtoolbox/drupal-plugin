@@ -146,7 +146,6 @@ function sendApiRequest($method, $requestPath, $requestData = ''){
         curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($requestData));
     }
     $response = curl_exec($curl);
-    curl_close($curl);
     return json_decode($response);
 }
 function setCookieOnLogin($responseArray, $rememberme){
