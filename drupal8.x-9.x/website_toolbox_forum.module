@@ -167,12 +167,13 @@ function website_toolbox_forum_user_presave( Drupal\Core\Entity\EntityInterface 
     }
 }
 function website_toolbox_forum_user_update(Drupal\Core\Entity\EntityInterface $entity){   
-    $emailToVerify  = $_SESSION['oldUserEmail'];
+    $emailToVerify  = $_SESSION['oldUserEmail'] ?? $entity->getEmail();
     $getUserDetails     = Drupal\website_toolbox_forum\getUserDetails($emailToVerify);
-    $userGroupId = $getUserDetails->{'data'}[0]->{'userGroups'};
-    if ($getUserDetails->{'data'}[0]->{'userId'}) {
-        $userId = $getUserDetails->{'data'}[0]->{'userId'};
+    $forumUser = $getUserDetails->{'data'}[0] ?? NULL;
+    if (!$forumUser || empty($forumUser->{'userId'})) {
+        return;
     }
+    $userId = $forumUser->{'userId'};
     $userName = $entity->getAccountName();
     $externalUserid = $entity->id();
     $user = \Drupal\user\Entity\User::load($entity->id());
