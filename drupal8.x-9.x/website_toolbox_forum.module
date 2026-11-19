@@ -143,7 +143,7 @@ function website_toolbox_forum_user_insert(Drupal\Core\Entity\EntityInterface $e
     $forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key') ;
     $forumUrl     = \Drupal::config('node.settings')->get('forum_url'); 
     $URL          = $forumUrl . "/register/create_account/";
-    $request = \Drupal::httpClient()->post($URL, ['verify' => true,'form_params' => ['apikey' => $forumsApiKey,'member' => $username,'email' => $email,'externalUserid' => $userId,"avatarUrl" => $avatarUrl]])->getBody()->getContents(); 
+    $request = \Drupal::httpClient()->post($URL, ['verify' => true,'form_params' => ['apikey' => $forumsApiKey,'member' => $username,'email' => $email,'externalUserid' => $userId,"avatar" => $avatarUrl]])->getBody()->getContents(); 
     if (!$request) {
         $result = json_decode($request);
         \Drupal::messenger()->addError($result->error ?? 'Unable to register the user with the Website Toolbox forum.');
