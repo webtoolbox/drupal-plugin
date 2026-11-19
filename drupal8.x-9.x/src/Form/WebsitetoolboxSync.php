@@ -182,9 +182,9 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
         'plugin' => 'drupal',
         'username' => $forumUsername,
         'password' => $forumPassword,
-        'login_page_url' => $base_url . "/?q=user",
-        'logout_page_url' => $base_url . "/?q = user/logout",
-        'registration_url' => $base_url . "/?q=user/register",]
+        'login_page_url' => $base_url . "/user/login",
+        'logout_page_url' => $base_url . "/user/logout",
+        'registration_url' => $base_url . "/user/register",]
         ])->getBody()->getContents(); 
     $response = json_decode($request);
     $forumUrl = $response->forumAddress ?? ''; 
@@ -258,7 +258,7 @@ function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
          'forumUsername' => $forumUsername,
          'forumApikey' => $forumAPI,
          'embed_page_url' => $embedUrl,
-         'login_page_url' => $base_url . "/user/register",
+         'login_page_url' => $base_url . "/user/login",
          'logout_page_url' => $base_url . "/user/logout",
          'registration_url' => $base_url . "/user/register",
     ]])->getBody()->getContents();    
