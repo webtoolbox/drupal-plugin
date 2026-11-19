@@ -56,20 +56,6 @@ function getUserDetails($userEmail){
         return $response;
     }
 } 
-function getUserGroupId($title){
-    $getUserGroupList = getGroupList();
-    $userGroups = [];
-    $groupListData = $getUserGroupList['data'] ?? [];
-    if (!is_array($groupListData)) {
-        return FALSE;
-    }
-    for($i=0; $i< count($groupListData);$i++){
-        $userGroupID =  $groupListData[$i]->{"userGroupId"};
-        $userGroups[$userGroupID] = $groupListData[$i]->{"title"};
-    }  
-    $userGroupId = array_search($title,$userGroups);
-    return $userGroupId;
-}
 function getUserGroupsByTitle(){
     $getUserGroupList = getGroupList();
     $userGroups = [];
