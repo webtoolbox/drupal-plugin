@@ -32,6 +32,8 @@ function website_toolbox_forum_node_view(array &$build, EntityInterface $node, $
     if (\Drupal::config('node.settings')->get('forum_embedded_option') != 1) {
         return;
     }
+    $build['#cache']['contexts'][] = 'cookies:forumLogoutToken';
+    $build['#cache']['contexts'][] = 'session.exists';
     $forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key');
     $forumUrl     = \Drupal::config('node.settings')->get('forum_url');
     $content      = $build['body'][0]['#text'] ?? '';
@@ -47,6 +49,7 @@ function website_toolbox_forum_node_view(array &$build, EntityInterface $node, $
             $auth_token = "?authtoken=" . $_COOKIE['forumLogoutToken'];
         } elseif (isset($_SESSION['forumLoginAuthToken'])) {
             $auth_token = "?authtoken=" . $_SESSION['forumLoginAuthToken'];
+            $build['#cache']['contexts'][] = 'session';
         }
         if (isset($_COOKIE['forumLogoutToken']) && isset($_COOKIE['loginRemember'])) {
             $auth_token .= "&remember=" . $_COOKIE['loginRemember'];
@@ -221,17 +224,22 @@ function website_toolbox_forum_user_delete( Drupal\Core\Entity\EntityInterface $
 function website_toolbox_forum_page_bottom(array &$page_bottom) { 
     $userId = \Drupal::currentUser()->id();
     $forumUrl = \Drupal::config('node.settings')->get('forum_url');
-    if ($userId == 0 && (isset($_COOKIE['forumLogoutToken']) || isset($_SESSION['forumLoginAuthToken']))) { 
-        $logoutAuthUrl = $forumUrl . "/register/logout?authtoken=" . $_COOKIE['forumLogoutToken'];
+    $authToken = $_COOKIE['forumLogoutToken'] ?? $_SESSION['forumLoginAuthToken'] ?? '';
+    $ssoCache = ['contexts' => ['cookies:forumLogoutToken', 'session.exists']];
+    if (!isset($_COOKIE['forumLogoutToken'])) {
+        $ssoCache['contexts'][] = 'session';
+    }
+    if ($userId == 0 && $authToken) { 
+        $logoutAuthUrl = $forumUrl . "/register/logout?authtoken=" . $authToken;
         $logoutAuthUrl = preg_replace('#^https?:#i', '', $logoutAuthUrl);
-        $page_bottom['contentImg'] = ['#markup' => '<img src="' . $logoutAuthUrl . '" border="0" width="0" height="0" alt="">'];
+        $page_bottom['contentImg'] = ['#markup' => '<img src="' . $logoutAuthUrl . '" border="0" width="0" height="0" alt="">', '#cache' => $ssoCache];
         Drupal\website_toolbox_forum\unsetLoginSession();
         Drupal\website_toolbox_forum\resetCookieOnLogout();
     }  
-    if ($userId != 0 && (isset($_COOKIE['forumLogoutToken']) || isset($_SESSION['forumLoginAuthToken']))) { 
-        $loginAuthUrl = $forumUrl . "/register/dologin?authtoken=" . $_COOKIE['forumLogoutToken'];
+    if ($userId != 0 && $authToken) { 
+        $loginAuthUrl = $forumUrl . "/register/dologin?authtoken=" . $authToken;
         $loginAuthUrl = preg_replace('#^https?:#i', '', $loginAuthUrl);
-        $page_bottom['contentImg'] = ['#markup' => '<img src="' . $loginAuthUrl . '" border="0" width="0" height="0" alt="">'];
+        $page_bottom['contentImg'] = ['#markup' => '<img src="' . $loginAuthUrl . '" border="0" width="0" height="0" alt="">', '#cache' => $ssoCache];
     }   
 }
 function existingUserForumLogin(){ 

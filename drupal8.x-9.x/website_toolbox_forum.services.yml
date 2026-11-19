@@ -1,0 +1,7 @@
+services:
+  _defaults:
+    autoconfigure: true
+  website_toolbox_forum.page_cache_request_policy:
+    class: Drupal\website_toolbox_forum\PageCache\RequestPolicy\ForumSsoCookies
+    tags:
+      - { name: page_cache_request_policy }
