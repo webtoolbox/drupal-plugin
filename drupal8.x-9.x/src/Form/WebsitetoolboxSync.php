@@ -268,7 +268,6 @@ function createForumMenuUrl($response,$nids){
     $forumUrl = $response->forumAddress;
     $menuLink = MenuLinkContent::create(['title' => 'Forum','link' => ['uri' => $forumUrl],'menu_name' => 'main','expanded' => TRUE,]);
     $menuLink->save();     
-    saveForumPathAlias("/".$forumUrl, "/forum");
     drupal_static_reset();
     // drupal_flush_all_caches() removed: without the $kernel argument it rebuilds
     // the container mid-request, replacing the session service; SessionManager
@@ -279,8 +278,14 @@ function createForumMenuUrl($response,$nids){
 /*Save a path alias for a system path, replacing any existing alias for it.
  * Replaces the path.alias_storage service, which no longer exists in Drupal 10.*/
 function saveForumPathAlias($path, $alias){
+    if (strpos($path, '/') !== 0 || strpos($path, '://') !== false) {
+        return;
+    }
     $storage = \Drupal::entityTypeManager()->getStorage('path_alias');
     foreach ($storage->loadByProperties(['path' => $path]) as $existingAlias) {
+        $existingAlias->delete();
+    }
+    foreach ($storage->loadByProperties(['alias' => $alias]) as $existingAlias) {
         $existingAlias->delete();
     }
     $storage->create(['path' => $path, 'alias' => $alias, 'langcode' => 'und'])->save();
