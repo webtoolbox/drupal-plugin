@@ -4,13 +4,3 @@ description: 'Cloud-based Forum Module. <br />Your Drupal forum doesn’t need t
 package: Custom
 core_version_requirement: ^10
 configure: website_toolbox_forum.sync
-
-# Information added by Drupal.org packaging script on 2020-09-24
-# version: '9.0.3'
-# project: 'website_toolbox_forum'
-# datestamp: 1600961079
-
-# Information added by Drupal.org packaging script on 2021-02-19
-version: '9.1.7'
-project: 'website_toolbox_forum'
-datestamp: 1613754792
