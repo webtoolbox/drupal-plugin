@@ -85,7 +85,7 @@ function getUserGroupsByTitle(){
     }
     return $userGroups;
 }
-function getUserGroupIdByRole($roleId, $roleTitle = '', $createGroup = TRUE){
+function getUserGroupIdByRole($roleId, $roleTitle = '', $createGroup = TRUE, $userTitle = ''){
     $roleTitle = ($roleTitle != '') ? $roleTitle : $roleId;
     $userGroups = getUserGroupsByTitle();
     if(isset($userGroups[strtolower($roleId)])){
@@ -97,7 +97,11 @@ function getUserGroupIdByRole($roleId, $roleTitle = '', $createGroup = TRUE){
     if(!$createGroup){
         return FALSE;
     }
-    $response = sendApiRequest('POST', "/usergroups", array("title" => $roleTitle));
+    $groupDetails = array("title" => $roleTitle);
+    if($userTitle != ''){
+        $groupDetails["usertitle"] = $userTitle;
+    }
+    $response = sendApiRequest('POST', "/usergroups", $groupDetails);
     return $response->{"userGroupId"} ?? FALSE;
 }
 function getUserGroupIdsForRoles($roles){

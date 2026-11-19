@@ -266,9 +266,7 @@ function website_toolbox_forum_user_role_insert(EntityInterface $entity) {
       if ($entity->isSyncing()) {
         return;
       }
-      $requestUrl = "/usergroups";
-      $userGroupDetails = array("title"=>$entity->id(),"usertitle"=>$entity->label()); 
-      Drupal\website_toolbox_forum\sendApiRequest('POST',$requestUrl,$userGroupDetails);
+      Drupal\website_toolbox_forum\getUserGroupIdByRole($entity->id(), $entity->label(), TRUE, $entity->label());
     }
 }
 function website_toolbox_forum_user_role_update(EntityInterface $entity) {
@@ -277,16 +275,15 @@ function website_toolbox_forum_user_role_update(EntityInterface $entity) {
       if ($entity->isSyncing()) {
         return;
       } 
-      $userGroupId = Drupal\website_toolbox_forum\getUserGroupId($entity->id()); 
-      if($userGroupId){
-        $requestUrl = "/usergroups/".$userGroupId;
-        $userGroupDetails = array("usertitle"=>$entity->label());
-      }else{
-        $requestUrl = "/usergroups";
-        $userGroupDetails = array("title"=>$entity->id(),"usertitle"=>$entity->label());
+      $userGroupId = Drupal\website_toolbox_forum\getUserGroupIdByRole($entity->id(), $entity->label(), FALSE);
+      if(!$userGroupId && $entity->original){
+        $userGroupId = Drupal\website_toolbox_forum\getUserGroupIdByRole($entity->id(), $entity->original->label(), FALSE);
       }
-       
-      Drupal\website_toolbox_forum\sendApiRequest('POST',$requestUrl,$userGroupDetails);
+      if($userGroupId){
+        Drupal\website_toolbox_forum\sendApiRequest('POST', "/usergroups/".$userGroupId, array("title"=>$entity->label(),"usertitle"=>$entity->label()));
+      }else{
+        Drupal\website_toolbox_forum\getUserGroupIdByRole($entity->id(), $entity->label(), TRUE, $entity->label());
+      }
     }
 }
 
@@ -299,9 +296,10 @@ function website_toolbox_forum_user_role_delete(EntityInterface $entity) {
       if ($entity->isSyncing()) {
         return;
       } 
-      $userGroupId = Drupal\website_toolbox_forum\getUserGroupId($entity->id()); 
-      $requestUrl = "/usergroups/".$userGroupId;
-      Drupal\website_toolbox_forum\sendApiRequest('DELETE',$requestUrl);
+      $userGroupId = Drupal\website_toolbox_forum\getUserGroupIdByRole($entity->id(), $entity->label(), FALSE);
+      if($userGroupId){
+        Drupal\website_toolbox_forum\sendApiRequest('DELETE', "/usergroups/".$userGroupId);
+      }
     }
 }
 ?>
