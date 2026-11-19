@@ -122,9 +122,10 @@ function website_toolbox_forum_user_login($account){
 
 function website_toolbox_forum_user_insert(Drupal\Core\Entity\EntityInterface $entity){
     $roles = $entity->getRoles(TRUE);
-    $username = $_POST['name'];
-    $email    = $_POST['mail'];
-    $pass     = $_POST['pass'];
+    $postPass = $_POST['pass'] ?? $_POST['pass1'] ?? '';
+    $username = $_POST['name'] ?? $entity->getAccountName();
+    $email    = $_POST['mail'] ?? $entity->getEmail();
+    $pass     = is_array($postPass) ? ($postPass['pass1'] ?? '') : $postPass;
     $userId   = $entity->id();
     $userData = (object) array(
         'name' => $username,

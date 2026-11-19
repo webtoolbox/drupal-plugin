@@ -187,8 +187,8 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
         'registration_url' => $base_url . "/?q=user/register",]
         ])->getBody()->getContents(); 
     $response = json_decode($request);
-    $forumUrl = $response->forumAddress; 
-    $forumApiKey = $response->forumApiKey; 
+    $forumUrl = $response->forumAddress ?? ''; 
+    $forumApiKey = $response->forumApiKey ?? ''; 
     \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_api_key', $forumApiKey)->save();
     \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_url', $forumUrl)->save();
      if ($forumUrl) { 
