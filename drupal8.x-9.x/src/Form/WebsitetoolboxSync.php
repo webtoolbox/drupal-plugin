@@ -30,7 +30,7 @@ class WebsitetoolboxSync extends FormBase {
         $form['#attached']['html_head'][] = array(
             array(
                 '#tag' => 'style',
-                '#value' => '.description{ margin-left: 191px !important; }',
+                '#value' => '.website-toolbox-forum-option{display:flex;align-items:flex-start;margin-top:20px;}.website-toolbox-forum-option__label{display:inline-block;min-width:218px;font-weight:700;}.website-toolbox-forum-option .form-item{display:flex;flex-wrap:wrap;align-items:center;margin:0;}.website-toolbox-forum-option .form-item input.form-checkbox{margin:0;float:none;}.website-toolbox-forum-option .form-item__label.option{margin:0 0 0 4px;display:inline-block;}.website-toolbox-forum-option .form-item__description{flex-basis:100%;margin:6px 0 0;}.website-toolbox-forum-option__help{margin:0 0 0 8px;display:inline-flex;align-items:center;}',
                 '#attributes' => array(),
             ),
             'website_toolbox_forum:form_style',
@@ -80,9 +80,9 @@ class WebsitetoolboxSync extends FormBase {
     if ((!isset($_GET['forumSettingOption'])) && ($username != '')) {
         $form['forum_embedded_label'] = array(
             '#type' => 'label',
-            '#prefix' => '<div>',
+            '#prefix' => '<div class="website-toolbox-forum-option">',
             '#title' => t('<b>Embedded  </b>'),
-            '#attributes'=>array('style'=>"margin-top:20px;margin-bottom:-25px;"),
+            '#attributes'=>array('class'=>array('website-toolbox-forum-option__label')),
         );
         $form['forum_embedded_option'] = array(
             '#type' => 'checkbox',
@@ -91,14 +91,13 @@ class WebsitetoolboxSync extends FormBase {
             '#size' => 60,
             '#description'=>'Enable this option to have your forum embedded in a page of your website. Disable this option to have your forum load in a full-sized window. You can use the Layout section in your Website Toolbox account to <a href="https://www.websitetoolbox.com/support/making-your-forum-layout-match-your-website-148" target="_blank">customize your forum layout to match your website</a> or <a href="https://www.websitetoolbox.com/contact?subject=Customize+Forum+Layout" target="_blank">contact Website Toolbox support to customize it for you</a>',
             '#required' => FALSE,
-            '#attributes'=>array('style'=>'margin-top: -15px !important;margin-left: 191px !important;'),
             '#suffix' => '</div>'
         );
         $form['forum_roles_sync_option_label'] = array(
             '#type' => 'label',
-            '#prefix' => '<div>',
+            '#prefix' => '<div class="website-toolbox-forum-option">',
             '#title' => t('<b>Synchronize Roles  </b>'),
-            '#attributes'=>array('style'=>"margin-top:20px;margin-bottom:-25px;"),
+            '#attributes'=>array('class'=>array('website-toolbox-forum-option__label')),
 
         );
 
@@ -106,11 +105,9 @@ class WebsitetoolboxSync extends FormBase {
             '#type' => 'checkbox',
             '#title' => t('<b>Yes</b>'),
             '#default_value' => \Drupal::config('node.settings')->get('forum_roles_sync_option'),
-            '#suffix'=>'</div>',
             '#size' => 60,
             '#maxlength' => 250,
             '#required' => FALSE,  
-            '#attributes'=>array('style'=>"margin-top: -15px !important;margin-left: 191px !important;"),
         );         
         $form['forum_roles_sync_help'] = array(
             '#type' => 'label',
@@ -118,8 +115,9 @@ class WebsitetoolboxSync extends FormBase {
             '#default_value' => \Drupal::config('node.settings')->get('forum_roles_sync_option'),
             '#attributes' => array(
                 'title' => 'If this option is enabled, user groups are created, updated and deleted in your Website Toolbox forum when the corresponding role in Drupal is created/edited/deleted. When a user is created/ edited in Drupal, user will be assigned the same user groups as their Drupal roles. There is no synchronization the other way around. When a user group is created in your forum, a role is not created on Drupal.',
-                'style'=>'margin-left: 125px;margin-top:-35px;'
+                'class'=>array('website-toolbox-forum-option__help')
             ),
+            '#suffix' => '</div>'
          );
     } 
     $form['actions']['submit'] = array(
