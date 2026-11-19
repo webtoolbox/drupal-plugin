@@ -128,6 +128,7 @@ class WebsitetoolboxSync extends FormBase {
     return $form;       
   }
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $storedUsername = \Drupal::config('node.settings')->get('forum_username');
     if(isset($_POST['forum_username'])){
         $forumUsername = $_POST['forum_username'];
         \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_username', $forumUsername)->save();
@@ -140,8 +141,7 @@ class WebsitetoolboxSync extends FormBase {
     } else{
         $forumPassword = \Drupal::config('node.settings')->get('forum_password');
     }
-    $username = \Drupal::config('node.settings')->get('forum_username', "");
-    if(!isset($username)){
+    if(!isset($storedUsername) || $storedUsername == ''){
          $forumEmbeddedOption = 1;
          $userRolesSyncOption = 1;
     }else{
