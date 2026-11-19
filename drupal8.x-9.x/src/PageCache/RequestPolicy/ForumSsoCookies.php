@@ -15,6 +15,12 @@ use Symfony\Component\HttpFoundation\Request;
  * has them (missing the logout image, and embedding the forum with a stale
  * token). Requests carrying the cookies are therefore never served from - nor
  * stored in - the page cache.
+ *
+ * Returns NULL (no opinion) otherwise: an ALLOW here would override the
+ * "undecided" verdict of Drupal's own policies for requests that carry a
+ * session, making the internal page cache store authenticated responses -
+ * which fails with "The database connection is not serializable" and 500s
+ * the page.
  */
 class ForumSsoCookies implements RequestPolicyInterface {
 
@@ -25,7 +31,7 @@ class ForumSsoCookies implements RequestPolicyInterface {
     if ($request->cookies->has('forumLogoutToken') || $request->cookies->has('forumLoginUserid')) {
       return static::DENY;
     }
-    return static::ALLOW;
+    return NULL;
   }
 
 }
