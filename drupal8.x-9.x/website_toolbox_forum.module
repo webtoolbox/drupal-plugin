@@ -122,8 +122,6 @@ function website_toolbox_forum_user_login($account){
 
 function website_toolbox_forum_user_insert(Drupal\Core\Entity\EntityInterface $entity){
     $roles = $entity->getRoles(TRUE);
-    $userGroupId = Drupal\website_toolbox_forum\getCustomUserGroups();
-    $customUserGroups = array_keys(array_intersect($userGroupId,$roles)); 
     $username = $_POST['name'];
     $email    = $_POST['mail'];
     $pass     = $_POST['pass'];
@@ -151,6 +149,7 @@ function website_toolbox_forum_user_insert(Drupal\Core\Entity\EntityInterface $e
     }else{
       $syncOption = \Drupal::config('node.settings')->get('forum_roles_sync_option');
       if($syncOption == 1){
+        $customUserGroups = array_keys(Drupal\website_toolbox_forum\getUserGroupIdsForRoles($roles));
         Drupal\website_toolbox_forum\assignDivestUserGroup($email, $username, $customUserGroups);
       }
     }
@@ -191,18 +190,21 @@ function website_toolbox_forum_user_update(Drupal\Core\Entity\EntityInterface $e
     Drupal\website_toolbox_forum\sendApiRequest('POST',$url,$userDetails); 
     $syncOption = \Drupal::config('node.settings')->get('forum_roles_sync_option');
     if($syncOption == 1){
-      $roles            = [];
       $removeUserGroups = [];
-      $assignUserGroups = [];
-      $roles = $entity->getRoles(TRUE); 
-      $userGroupByName = Drupal\website_toolbox_forum\getUserGroupByName($getUserDetails); 
-      if(!empty($roles)){
-        $assignUserGroups = array_diff($roles, $userGroupByName);  
-      } 
-      if(!empty($userGroupByName)){
-        $removeUserGroups = array_keys(array_diff($userGroupByName,$roles));
-      }     
-       Drupal\website_toolbox_forum\assignDivestUserGroup($email, $userName, $assignUserGroups,$removeUserGroups);
+      $assignUserGroups = array_keys(Drupal\website_toolbox_forum\getUserGroupIdsForRoles($entity->getRoles(TRUE)));
+      if($entity->original){
+        $removedRoles = array_diff($entity->original->getRoles(TRUE), $entity->getRoles(TRUE));
+        $roleStorage  = \Drupal::entityTypeManager()->getStorage('user_role');
+        foreach ($removedRoles as $removedRole) {
+          $role      = $roleStorage->load($removedRole);
+          $roleTitle = $role ? $role->label() : $removedRole;
+          $userGroupId = Drupal\website_toolbox_forum\getUserGroupIdByRole($removedRole, $roleTitle, FALSE);
+          if($userGroupId && !in_array($userGroupId, $assignUserGroups)){
+            $removeUserGroups[] = $userGroupId;
+          }
+        }
+      }
+      Drupal\website_toolbox_forum\assignDivestUserGroup($email, $userName, $assignUserGroups, $removeUserGroups);
     }
 }
 function website_toolbox_forum_user_delete( Drupal\Core\Entity\EntityInterface $entity){

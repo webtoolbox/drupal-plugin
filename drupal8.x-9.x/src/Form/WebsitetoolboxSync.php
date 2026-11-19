@@ -154,9 +154,7 @@ class WebsitetoolboxSync extends FormBase {
                 $forumEmbeddedOption = 0;
             }
         } else {
-            if (isset($_POST['forum_hidden'])) {
-                $forumEmbeddedOption = $_POST['forum_hidden'];
-            }
+            $forumEmbeddedOption = isset($_POST['forum_hidden']) ? $_POST['forum_hidden'] : 0;
         }  
         if (isset($_POST['forum_roles_sync_option'])) {
             if ($_POST['forum_roles_sync_option'] == 1) {
@@ -165,7 +163,7 @@ class WebsitetoolboxSync extends FormBase {
                 $userRolesSyncOption = 0;
             }
         } else {
-            $userRolesSyncOption = $_POST['user_sync_hidden'];
+            $userRolesSyncOption = isset($_POST['user_sync_hidden']) ? $_POST['user_sync_hidden'] : 0;
         }  
     }   
     \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_embedded_option', $forumEmbeddedOption)->save();

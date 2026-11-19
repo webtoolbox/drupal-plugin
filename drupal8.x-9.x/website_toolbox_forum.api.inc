@@ -56,22 +56,6 @@ function getUserDetails($userEmail){
         return $response;
     }
 } 
-function getUserGroupByName($userGroupDetails){
-    $UserGroupByName = [];
-    $userGroupId = $userGroupDetails->{'data'}[0]->{'userGroups'} ?? [];
-    if (!is_array($userGroupId)) {
-        return $UserGroupByName;
-    }
-    for($i=0; $i<count($userGroupId);$i++){
-        $requestUrl = "/usergroups/".$userGroupId[$i];
-        $response = sendApiRequest('GET',$requestUrl); 
-        if($response->{'defaultGroup'} == false)
-        {   $userGroupIds = $response->{'userGroupId'}; 
-            $UserGroupByName[$userGroupIds] = $response->{'title'};
-        }
-    }
-    return $UserGroupByName;
-}
 function getUserGroupId($title){
     $getUserGroupList = getGroupList();
     $userGroups = [];
@@ -86,13 +70,7 @@ function getUserGroupId($title){
     $userGroupId = array_search($title,$userGroups);
     return $userGroupId;
 }
-function getGroupList(){
-    $requestUrl = "/usergroups";
-    $limit = array("limit"=>100); 
-    $response = (array)sendApiRequest('GET',$requestUrl,$limit); 
-    return $response;
-}
-function getCustomUserGroups(){
+function getUserGroupsByTitle(){
     $getUserGroupList = getGroupList();
     $userGroups = [];
     $groupListData = $getUserGroupList['data'] ?? [];
@@ -100,13 +78,47 @@ function getCustomUserGroups(){
         return $userGroups;
     }
     for($i=0; $i< count($groupListData);$i++){
-        if($groupListData[$i]->{"defaultGroup"} === false){
-            $userGroupID =  $groupListData[$i]->{"userGroupId"};
-            $userGroups[$userGroupID] =  $groupListData[$i]->{"title"};
+        $groupTitle = $groupListData[$i]->{"title"} ?? '';
+        if($groupTitle != ''){
+            $userGroups[strtolower($groupTitle)] = $groupListData[$i]->{"userGroupId"};
         }
-    }  
+    }
     return $userGroups;
- }
+}
+function getUserGroupIdByRole($roleId, $roleTitle = '', $createGroup = TRUE){
+    $roleTitle = ($roleTitle != '') ? $roleTitle : $roleId;
+    $userGroups = getUserGroupsByTitle();
+    if(isset($userGroups[strtolower($roleId)])){
+        return $userGroups[strtolower($roleId)];
+    }
+    if(isset($userGroups[strtolower($roleTitle)])){
+        return $userGroups[strtolower($roleTitle)];
+    }
+    if(!$createGroup){
+        return FALSE;
+    }
+    $response = sendApiRequest('POST', "/usergroups", array("title" => $roleTitle));
+    return $response->{"userGroupId"} ?? FALSE;
+}
+function getUserGroupIdsForRoles($roles){
+    $userGroups = [];
+    $roleStorage = \Drupal::entityTypeManager()->getStorage('user_role');
+    foreach ($roles as $roleId) {
+        $role = $roleStorage->load($roleId);
+        $roleTitle = $role ? $role->label() : $roleId;
+        $userGroupId = getUserGroupIdByRole($roleId, $roleTitle);
+        if($userGroupId){
+            $userGroups[$userGroupId] = $roleTitle;
+        }
+    }
+    return $userGroups;
+}
+function getGroupList(){
+    $requestUrl = "/usergroups";
+    $limit = array("limit"=>100); 
+    $response = (array)sendApiRequest('GET',$requestUrl,$limit); 
+    return $response;
+}
 function assignDivestUserGroup($userEmail, $username, $userGroupsToAssign ='', $userGroupsToDivest = '' ){ 
     $userDetails = array("emailAddresses"=>$userEmail,"usernames"=>$username);
     if(!empty($userGroupsToAssign)){
