@@ -1,18 +1,6 @@
 <?php
 namespace Drupal\website_toolbox_forum;
 const WT_API_URL = 'https://api.websitetoolbox.com/v1/api';
-/* Resolve the API gateway base URL from the configured forum address.
-   Beta forums (betaN.websitetoolbox.com) authenticate against their own
-   gateway stage (api.websitetoolbox.com/betaN/api); live forums use the
-   production stage (v1). */
-function getApiBaseUrl(){
-    $forumUrl = \Drupal::config('node.settings')->get('forum_url', '');
-    $host = parse_url($forumUrl, PHP_URL_HOST);
-    if ($host && preg_match('/^beta([0-9]+)\.websitetoolbox\.com$/', $host, $matches)) {
-        return 'https://api.websitetoolbox.com/beta' . $matches[1] . '/api';
-    }
-    return WT_API_URL;
-}
 function getForumAuthtoken($user, $type){
     $forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key');
     $forumUrl     = \Drupal::config('node.settings')->get('forum_url');
@@ -51,57 +39,32 @@ function saveAuthToken($authtoken, $forumUserid){
 function getUserDetails($userEmail){
     if ($userEmail) {
         $userEmailDetail = array('email' => $userEmail);
-        $url = getApiBaseUrl()."/users/";
+        $url = WT_API_URL."/users/";
         $response = sendApiRequest('GET', "/users/", $userEmailDetail);
         return $response;
     }
 } 
-function getUserGroupsByTitle(){
+function getUserGroupByName($userGroupDetails){
+    $UserGroupByName = [];
+    $userGroupId = $userGroupDetails->{'data'}[0]->{'userGroups'};
+    for($i=0; $i<count($userGroupId);$i++){
+        $requestUrl = "/usergroups/".$userGroupId[$i];
+        $response = sendApiRequest('GET',$requestUrl); 
+        if($response->{'defaultGroup'} == false)
+        {   $userGroupIds = $response->{'userGroupId'}; 
+            $UserGroupByName[$userGroupIds] = $response->{'title'};
+        }
+    }
+    return $UserGroupByName;
+}
+function getUserGroupId($title){
     $getUserGroupList = getGroupList();
-    $userGroups = [];
-    $groupListData = $getUserGroupList['data'] ?? [];
-    if (!is_array($groupListData)) {
-        return $userGroups;
-    }
-    for($i=0; $i< count($groupListData);$i++){
-        $groupTitle = $groupListData[$i]->{"title"} ?? '';
-        if($groupTitle != ''){
-            $userGroups[strtolower($groupTitle)] = $groupListData[$i]->{"userGroupId"};
-        }
-    }
-    return $userGroups;
-}
-function getUserGroupIdByRole($roleId, $roleTitle = '', $createGroup = TRUE, $userTitle = ''){
-    $roleTitle = ($roleTitle != '') ? $roleTitle : $roleId;
-    $userGroups = getUserGroupsByTitle();
-    if(isset($userGroups[strtolower($roleId)])){
-        return $userGroups[strtolower($roleId)];
-    }
-    if(isset($userGroups[strtolower($roleTitle)])){
-        return $userGroups[strtolower($roleTitle)];
-    }
-    if(!$createGroup){
-        return FALSE;
-    }
-    $groupDetails = array("title" => $roleTitle);
-    if($userTitle != ''){
-        $groupDetails["usertitle"] = $userTitle;
-    }
-    $response = sendApiRequest('POST', "/usergroups", $groupDetails);
-    return $response->{"userGroupId"} ?? FALSE;
-}
-function getUserGroupIdsForRoles($roles){
-    $userGroups = [];
-    $roleStorage = \Drupal::entityTypeManager()->getStorage('user_role');
-    foreach ($roles as $roleId) {
-        $role = $roleStorage->load($roleId);
-        $roleTitle = $role ? $role->label() : $roleId;
-        $userGroupId = getUserGroupIdByRole($roleId, $roleTitle);
-        if($userGroupId){
-            $userGroups[$userGroupId] = $roleTitle;
-        }
-    }
-    return $userGroups;
+    for($i=0; $i< count($getUserGroupList['data']);$i++){
+        $userGroupID =  $getUserGroupList['data'][$i]->{"userGroupId"};
+        $userGroups[$userGroupID] = $getUserGroupList['data'][$i]->{"title"};
+    }  
+    $userGroupId = array_search($title,$userGroups);
+    return $userGroupId;
 }
 function getGroupList(){
     $requestUrl = "/usergroups";
@@ -109,15 +72,25 @@ function getGroupList(){
     $response = (array)sendApiRequest('GET',$requestUrl,$limit); 
     return $response;
 }
+function getCustomUserGroups(){
+    $getUserGroupList = getGroupList();
+    for($i=0; $i< count($getUserGroupList['data']);$i++){
+        if($getUserGroupList['data'][$i]->{"defaultGroup"} === false){
+            $userGroupID =  $getUserGroupList['data'][$i]->{"userGroupId"};
+            $userGroups[$userGroupID] =  $getUserGroupList['data'][$i]->{"title"};
+        }
+    }  
+    return $userGroups;
+ }
 function assignDivestUserGroup($userEmail, $username, $userGroupsToAssign ='', $userGroupsToDivest = '' ){ 
     $userDetails = array("emailAddresses"=>$userEmail,"usernames"=>$username);
-    if(!empty($userGroupsToAssign)){
+    if(!empty($userGroupsToAssign)){echo "lllll";
       foreach ($userGroupsToAssign as $userGroupsToAssignRoles) {
         $requestUrl = "/usergroups/".$userGroupsToAssignRoles."/users";
         sendApiRequest('POST',$requestUrl,$userDetails); 
       }
     }
-    if(!empty($userGroupsToDivest)){
+    if(!empty($userGroupsToDivest)){echo "222";
       foreach ($userGroupsToDivest as $userGroupsToDivestRoles) {
          $requestUrl = "/usergroups/".$userGroupsToDivestRoles."/users";
          sendApiRequest('DELETE',$requestUrl,$userDetails); 
@@ -125,7 +98,7 @@ function assignDivestUserGroup($userEmail, $username, $userGroupsToAssign ='', $
     }
 }
 function sendApiRequest($method, $requestPath, $requestData = ''){
-    $requestUrl = getApiBaseUrl() . $requestPath;
+    $requestUrl = WT_API_URL . $requestPath;
      if (strtoupper($method) == "GET") {
         if($requestData != ''){
             $requestUrl = sprintf("%s?%s", $requestUrl, http_build_query($requestData));
@@ -148,6 +121,7 @@ function sendApiRequest($method, $requestPath, $requestData = ''){
         curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($requestData));
     }
     $response = curl_exec($curl);
+    curl_close($curl);
     return json_decode($response);
 }
 function setCookieOnLogin($responseArray, $rememberme){
@@ -163,13 +137,12 @@ function setCookieOnLogin($responseArray, $rememberme){
     return true;
 }
 function resetCookieOnLogout(){
-    // Expire the cookies in the browser only. Do NOT unset $_COOKIE here:
-    // hook_page_bottom runs before the menu/node render in the same request,
-    // and wiping the superglobal made later hooks (link_alter, node_view)
-    // miss the authtoken.
     setcookie('forumLogoutToken', 0, time() - 3600, "/");
+    unset($_COOKIE['forumLogoutToken']);
     setcookie('forumLoginUserid', '', time() - 3600, "/");
+    unset($_COOKIE['forumLoginUserid']);
     setcookie('loginRemember', '', time() - 3600, "/");
+    unset($_COOKIE['loginRemember']);
 }
 function setForumCookies($cname, $cvalue, $persistent){
     if ($persistent == 1) {
@@ -177,12 +150,11 @@ function setForumCookies($cname, $cvalue, $persistent){
     } else {
         $expiration = 0;
     }
-// Use the options-array form (PHP 7.3+) so SameSite/Secure are proper cookie
-// options; stuffing them into the path argument is a ValueError fatal on PHP 8.
+// Pass param in setcookie function as a array if php version is 7.3 or above, to overcome the waring return on wordpress website.
     if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') {
-        setcookie($cname, $cvalue, ['expires' => $expiration, 'path' => '/', 'samesite' => 'None', 'secure' => TRUE]);
+        setcookie($cname, $cvalue, $expiration, "/" . " ; SameSite=None; Secure;");
     } else {
-        setcookie($cname, $cvalue, ['expires' => $expiration, 'path' => '/']);
+        setcookie($cname, $cvalue, $expiration,'/');
     }
 }
 function unsetLoginSession(){

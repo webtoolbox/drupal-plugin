@@ -7,8 +7,11 @@ namespace Drupal\website_toolbox_forum\Form;
 const WT_SETTINGS_URL = 'https://www.websitetoolbox.com/tool/members/mb/settings';
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 use Drupal\node\Entity\Node;
 use Drupal\menu_link_content\Entity\MenuLinkContent;
+use Drupal\Core\Database\Database;
+use Drupal\Core\Render\Element;
 /**
  * Construct the storage changes in a configuration synchronization form.
  */
@@ -23,14 +26,6 @@ class WebsitetoolboxSync extends FormBase {
         $form['display_html'][] = array(
             '#type' => 'markup',
             '#markup' => $html
-        );
-        $form['#attached']['html_head'][] = array(
-            array(
-                '#tag' => 'style',
-                '#value' => '.website-toolbox-forum-option{display:flex;align-items:flex-start;margin-top:20px;}.website-toolbox-forum-option__label{display:inline-block;min-width:218px;font-weight:700;}.website-toolbox-forum-option .form-item{display:flex;flex-wrap:wrap;align-items:center;margin:0;}.website-toolbox-forum-option .form-item input.form-checkbox{margin:0;float:none;}.website-toolbox-forum-option .form-item__label.option{margin:0 0 0 4px;display:inline-block;}.website-toolbox-forum-option .form-item__description{flex-basis:100%;margin:6px 0 0;}.website-toolbox-forum-option__help{margin:0 0 0 8px;display:inline-flex;align-items:center;}',
-                '#attributes' => array(),
-            ),
-            'website_toolbox_forum:form_style',
         );
         if (isset($_SESSION['flag']) && ($_SESSION['flag'] == 1)) { 
             $getUserName            = \Drupal::config('node.settings')->get('forum_username', "");
@@ -77,9 +72,9 @@ class WebsitetoolboxSync extends FormBase {
     if ((!isset($_GET['forumSettingOption'])) && ($username != '')) {
         $form['forum_embedded_label'] = array(
             '#type' => 'label',
-            '#prefix' => '<div class="website-toolbox-forum-option">',
+            '#prefix' => '<div>',
             '#title' => t('<b>Embedded  </b>'),
-            '#attributes'=>array('class'=>array('website-toolbox-forum-option__label')),
+            '#attributes'=>array('style'=>"margin-top:20px;margin-bottom:-25px;"),
         );
         $form['forum_embedded_option'] = array(
             '#type' => 'checkbox',
@@ -88,13 +83,14 @@ class WebsitetoolboxSync extends FormBase {
             '#size' => 60,
             '#description'=>'Enable this option to have your forum embedded in a page of your website. Disable this option to have your forum load in a full-sized window. You can use the Layout section in your Website Toolbox account to <a href="https://www.websitetoolbox.com/support/making-your-forum-layout-match-your-website-148" target="_blank">customize your forum layout to match your website</a> or <a href="https://www.websitetoolbox.com/contact?subject=Customize+Forum+Layout" target="_blank">contact Website Toolbox support to customize it for you</a>',
             '#required' => FALSE,
+            '#attributes'=>array('style'=>'margin-top: -15px !important;margin-left: 191px !important;'),
             '#suffix' => '</div>'
         );
         $form['forum_roles_sync_option_label'] = array(
             '#type' => 'label',
-            '#prefix' => '<div class="website-toolbox-forum-option">',
+            '#prefix' => '<div>',
             '#title' => t('<b>Synchronize Roles  </b>'),
-            '#attributes'=>array('class'=>array('website-toolbox-forum-option__label')),
+            '#attributes'=>array('style'=>"margin-top:20px;margin-bottom:-25px;"),
 
         );
 
@@ -102,9 +98,11 @@ class WebsitetoolboxSync extends FormBase {
             '#type' => 'checkbox',
             '#title' => t('<b>Yes</b>'),
             '#default_value' => \Drupal::config('node.settings')->get('forum_roles_sync_option'),
+            '#suffix'=>'</div>',
             '#size' => 60,
             '#maxlength' => 250,
             '#required' => FALSE,  
+            '#attributes'=>array('style'=>"margin-top: -15px !important;margin-left: 191px !important;"),
         );         
         $form['forum_roles_sync_help'] = array(
             '#type' => 'label',
@@ -112,9 +110,8 @@ class WebsitetoolboxSync extends FormBase {
             '#default_value' => \Drupal::config('node.settings')->get('forum_roles_sync_option'),
             '#attributes' => array(
                 'title' => 'If this option is enabled, user groups are created, updated and deleted in your Website Toolbox forum when the corresponding role in Drupal is created/edited/deleted. When a user is created/ edited in Drupal, user will be assigned the same user groups as their Drupal roles. There is no synchronization the other way around. When a user group is created in your forum, a role is not created on Drupal.',
-                'class'=>array('website-toolbox-forum-option__help')
+                'style'=>'margin-left: 125px;margin-top:-35px;'
             ),
-            '#suffix' => '</div>'
          );
     } 
     $form['actions']['submit'] = array(
@@ -125,7 +122,6 @@ class WebsitetoolboxSync extends FormBase {
     return $form;       
   }
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $storedUsername = \Drupal::config('node.settings')->get('forum_username');
     if(isset($_POST['forum_username'])){
         $forumUsername = $_POST['forum_username'];
         \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_username', $forumUsername)->save();
@@ -138,7 +134,8 @@ class WebsitetoolboxSync extends FormBase {
     } else{
         $forumPassword = \Drupal::config('node.settings')->get('forum_password');
     }
-    if(!isset($storedUsername) || $storedUsername == ''){
+    $username = \Drupal::config('node.settings')->get('forum_username', "");
+    if(!isset($username)){
          $forumEmbeddedOption = 1;
          $userRolesSyncOption = 1;
     }else{
@@ -149,7 +146,9 @@ class WebsitetoolboxSync extends FormBase {
                 $forumEmbeddedOption = 0;
             }
         } else {
-            $forumEmbeddedOption = isset($_POST['forum_hidden']) ? $_POST['forum_hidden'] : 0;
+            if (isset($_POST['forum_hidden'])) {
+                $forumEmbeddedOption = $_POST['forum_hidden'];
+            }
         }  
         if (isset($_POST['forum_roles_sync_option'])) {
             if ($_POST['forum_roles_sync_option'] == 1) {
@@ -158,14 +157,14 @@ class WebsitetoolboxSync extends FormBase {
                 $userRolesSyncOption = 0;
             }
         } else {
-            $userRolesSyncOption = isset($_POST['user_sync_hidden']) ? $_POST['user_sync_hidden'] : 0;
+            $userRolesSyncOption = $_POST['user_sync_hidden'];
         }  
     }   
     \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_embedded_option', $forumEmbeddedOption)->save();
     \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_roles_sync_option',$userRolesSyncOption)->save();
     checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption);  
     existingUserForumLogin();
-    $urlRedirect      = explode("?", $_SERVER['HTTP_REFERER'] ?? '');
+    $urlRedirect      = explode("?",$_SERVER['HTTP_REFERER']);
     header("location:" . $urlRedirect[0]);
     exit();      
   }
@@ -179,24 +178,25 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
         'plugin' => 'drupal',
         'username' => $forumUsername,
         'password' => $forumPassword,
-        'login_page_url' => $base_url . "/user/login",
-        'logout_page_url' => $base_url . "/user/logout",
-        'registration_url' => $base_url . "/user/register",]
-        ])->getBody()->getContents(); 
+        'login_page_url' => $base_url . "/?q=user",
+        'logout_page_url' => $base_url . "/?q = user/logout",
+        'registration_url' => $base_url . "/?q=user/register",],
+        'headers' => ['Content-type' => 'application/json',
+    ]])->getBody()->getContents(); 
     $response = json_decode($request);
-    $forumUrl = $response->forumAddress ?? ''; 
-    $forumApiKey = $response->forumApiKey ?? ''; 
+    $forumUrl = $response->forumAddress; 
+    $forumApiKey = $response->forumApiKey; 
     \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_api_key', $forumApiKey)->save();
     \Drupal::service('config.factory')->getEditable('node.settings')->set('forum_url', $forumUrl)->save();
      if ($forumUrl) { 
         $database = \Drupal::database();
-        $query      = \Drupal::entityQuery('node')->accessCheck(FALSE)->condition('title', 'Forum');
+        $query      = \Drupal::entityQuery('node')->condition('title', 'Forum');
         $nids       = $query->execute();
         $getNodeArray = array_keys($nids);
         $getRevisionNodeID = array_shift($getNodeArray); 
-        $existNode = $getRevisionNodeID ? Node::load($getRevisionNodeID) : NULL;
+        $existNode = Node::load($getRevisionNodeID);
         $getNodeId = array_values($nids);
-        $nodeId = 'internal:/node/'.($getNodeId[0] ?? '');
+        $nodeId = 'internal:/node/'.$getNodeId[0];
         if($existNode){
             $existNode->delete();   
         }  
@@ -219,7 +219,7 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
         }
     }else{
         $_SESSION['flag'] = 1;
-        $urlRedirect      = $_SERVER['HTTP_REFERER'] ?? '';
+        $urlRedirect      = $_SERVER['HTTP_REFERER'];
         header("location:" . $urlRedirect);
         exit();
     }
@@ -236,13 +236,9 @@ function createEmbeddedForum($response, $forumEmbeddedOption,$nids){
         'menu_name' => 'main',
         'expanded' => TRUE,]);
     $menuLink->save();
-    saveForumPathAlias("/node/" . $nodeId, "/forum");
+    $path = \Drupal::service('path.alias_storage')->save("/node/" . $nodeId, "/forum", 'und');
     drupal_static_reset();
-    // drupal_flush_all_caches() removed: without the $kernel argument it rebuilds
-    // the container mid-request, replacing the session service; SessionManager
-    // then treats the in-flight session as obsolete and destroys/never-saves it,
-    // logging the user out. Entity saves already invalidate the relevant caches
-    // via cache tags (node, menu_link_content), so a full flush is unnecessary.
+    drupal_flush_all_caches();  
 }
 /*Update forum url and login/logout url on forum server configuration*/
 function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
@@ -255,7 +251,7 @@ function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
          'forumUsername' => $forumUsername,
          'forumApikey' => $forumAPI,
          'embed_page_url' => $embedUrl,
-         'login_page_url' => $base_url . "/user/login",
+         'login_page_url' => $base_url . "/user/register",
          'logout_page_url' => $base_url . "/user/logout",
          'registration_url' => $base_url . "/user/register",
     ]])->getBody()->getContents();    
@@ -265,25 +261,12 @@ function createForumMenuUrl($response,$nids){
     $forumUrl = $response->forumAddress;
     $menuLink = MenuLinkContent::create(['title' => 'Forum','link' => ['uri' => $forumUrl],'menu_name' => 'main','expanded' => TRUE,]);
     $menuLink->save();     
+    $path = \Drupal::service('path.alias_storage')->save("/".$forumUrl, "/forum", 'und');
     drupal_static_reset();
-    // drupal_flush_all_caches() removed: without the $kernel argument it rebuilds
-    // the container mid-request, replacing the session service; SessionManager
-    // then treats the in-flight session as obsolete and destroys/never-saves it,
-    // logging the user out. Entity saves already invalidate the relevant caches
-    // via cache tags (node, menu_link_content), so a full flush is unnecessary.
+    drupal_flush_all_caches();      
 }
-/*Save a path alias for a system path, replacing any existing alias for it.
- * Replaces the path.alias_storage service, which no longer exists in Drupal 10.*/
-function saveForumPathAlias($path, $alias){
-    if (strpos($path, '/') !== 0 || strpos($path, '://') !== false) {
-        return;
-    }
-    $storage = \Drupal::entityTypeManager()->getStorage('path_alias');
-    foreach ($storage->loadByProperties(['path' => $path]) as $existingAlias) {
-        $existingAlias->delete();
-    }
-    foreach ($storage->loadByProperties(['alias' => $alias]) as $existingAlias) {
-        $existingAlias->delete();
-    }
-    $storage->create(['path' => $path, 'alias' => $alias, 'langcode' => 'und'])->save();
+echo "<style>
+.description{
+   margin-left: 191px !important;
 }
+</style>";
