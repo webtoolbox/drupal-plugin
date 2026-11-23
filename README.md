@@ -50,6 +50,6 @@ Don't have a Website Toolbox forum yet? [Create a forum now](https://www.website
 
 ## License
 
-Released under the GNU General Public License, version 2 (GPL-2.0), consistent with Drupal. See `LICENSE.txt` in each module folder.
+Released under the GNU General Public License, version 2 (GPL-2.0), consistent with Drupal. See [`LICENSE.txt`](LICENSE.txt) at the repository root and in each module folder.
 
 Brought to you by [Website Toolbox](https://www.websitetoolbox.com) — the easiest way to add a forum to your website.
