@@ -1,36 +1,47 @@
 <?php 
-use Drupal\Core\Form\FormBase;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
 use Drupal\node\Entity\Node;
 use Drupal\menu_link_content\Entity\MenuLinkContent;
-use Drupal\Core\Database\Database;
 
 function website_toolbox_forum_uninstall() {
-	$wtbForumUrl = \Drupal::config('node.settings')->get('forum_url');
-	$query = \Drupal::entityQuery('node')->condition('title', 'Forum');
-    $nids = $query->execute();  
-	$getNodeArray = array_keys($nids);
-    $getNodeID = array_shift($getNodeArray);
-    $existNode = Node::load($getNodeID);
-	if($existNode){
-        $existNode->delete();   
-    }
-	$database = \Drupal::database();	 
-    $query = $database->query("SELECT * FROM  {menu_link_content_data} where title = 'Forum'");
-    $result = $query->fetchAll();  
-    if($result) { 
-        $menuId = $result[0]->id;
-        $menu_link = MenuLinkContent::load($menuId);
-        $menu_link->delete();
-        $query = $database->query("delete  FROM  {path_alias} where alias = 'forum'");
-    } 
-	$query = $database->query("delete  FROM  {path_alias} where alias = 'forum'");
-	\Drupal::service('config.factory')->getEditable('node.settings')->delete();
-    setcookie('forumLogoutToken', 0, time() - 3600, "/");
-    unset($_COOKIE['forumLogoutToken']);
-    setcookie('forumLoginUserid', '', time() - 3600, "/");
-    unset($_COOKIE['forumLoginUserid']);
-    setcookie('loginRemember', '', time() - 3600, "/");
-    unset($_COOKIE['loginRemember']);
-}?>
+	$forumUrl = \Drupal::config('node.settings')->get('forum_url');
+	$forumNodeId = 0;
+	$aliasPath = \Drupal::service('path_alias.manager')->getPathByAlias('/forum');
+	if (preg_match('#^/node/([0-9]+)$#', $aliasPath, $matches)) {
+		$forumNodeId = (int) $matches[1];
+	}
+	else {
+		$nids = \Drupal::entityQuery('node')->accessCheck(FALSE)->condition('title', 'Forum')->condition('type', 'page')->execute();
+		$forumNodeId = $nids ? (int) array_key_first($nids) : 0;
+	}
+	if ($forumNodeId) {
+		$forumNode = Node::load($forumNodeId);
+		if ($forumNode) {
+			$forumNode->delete();
+		}
+	}
+	$database = \Drupal::database();
+	$menuLinks = $database->select('menu_link_content_data', 'm')->fields('m', array('id', 'link__uri'))->condition('title', 'Forum')->execute()->fetchAll();
+	foreach ($menuLinks as $menuLinkRow) {
+		$menuLinkUri = (string) $menuLinkRow->link__uri;
+		$belongsToPlugin = ($forumNodeId && $menuLinkUri == '/node/' . $forumNodeId) || ($forumUrl && $menuLinkUri == $forumUrl);
+		if ($belongsToPlugin) {
+			$menuLink = MenuLinkContent::load($menuLinkRow->id);
+			if ($menuLink) {
+				$menuLink->delete();
+			}
+		}
+	}
+	$database->delete('path_alias')->condition('alias', array('forum', '/forum'), 'IN')->execute();
+	$config = \Drupal::configFactory()->getEditable('node.settings');
+	foreach (array('forum_url', 'forum_api_key', 'forum_username', 'forum_password', 'forum_embedded_option', 'forum_roles_sync_option', 'forum_hidden', 'user_sync_hidden') as $key) {
+		$config->clear($key);
+	}
+	$config->save();
+	setcookie('forumLogoutToken', 0, time() - 3600, "/");
+	unset($_COOKIE['forumLogoutToken']);
+	setcookie('forumLoginUserid', '', time() - 3600, "/");
+	unset($_COOKIE['forumLoginUserid']);
+	setcookie('loginRemember', '', time() - 3600, "/");
+	unset($_COOKIE['loginRemember']);
+}
+?>
