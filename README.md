@@ -11,6 +11,7 @@ Each Drupal release line has its own directory in this repository:
 - **[`drupal7.x/`](drupal7.x)** — Website Toolbox Forum for Drupal 7
 - **[`drupal8.x-9.x/`](drupal8.x-9.x)** — Website Toolbox Forum for Drupal 8 and Drupal 9
 - **[`drupal10.x/`](drupal10.x)** — Website Toolbox Forum for Drupal 10
+- **[`drupal11.x/`](drupal11.x)** — Website Toolbox Forum for Drupal 11
 
 Download the folder that matches your Drupal version and install it as the `website_toolbox_forum` module (see [Installation](#installation) below). When you upgrade Drupal, switch to the folder for your new version.
 
@@ -29,10 +30,10 @@ Download the folder that matches your Drupal version and install it as the `webs
 
 1. Download this repository, or just the module folder for your Drupal version.
 2. Copy the matching folder into your Drupal site's custom modules directory and rename it to `website_toolbox_forum`:
-   - Drupal 8 / 9 / 10 — `modules/custom/website_toolbox_forum`
+   - Drupal 8 / 9 / 10 / 11 — `modules/custom/website_toolbox_forum`
    - Drupal 7 — `sites/all/modules/website_toolbox_forum`
 3. Enable the **Website Toolbox Forum** module:
-   - Drupal 8 / 9 / 10 — **Extend** (`/admin/modules`)
+   - Drupal 8 / 9 / 10 / 11 — **Extend** (`/admin/modules`)
    - Drupal 7 — **Modules** (`/admin/modules`)
 4. Open **Configuration → Website Toolbox Forum**, enter your Website Toolbox forum username and password, choose whether the forum is embedded, and save. A **Forum** link then appears in your site navigation.
 

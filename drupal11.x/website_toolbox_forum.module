@@ -1,0 +1,303 @@
+<?php    
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Entity\EntityInterface;
+\Drupal::moduleHandler()->loadInclude('website_toolbox_forum', 'api.inc');  
+function website_toolbox_forum_help($route_name, RouteMatchInterface $route_match) {
+    switch ($route_name) {
+      case 'help.page.website_toolbox_forum':
+        $output = '';
+        $output .= '<h3>' . t('About') . '</h3>';
+        $output .= '<p>' . t('Your Drupal forum doesn’t need to be basic. Website Toolbox is a cloud-based forum plugin that allows you to easily add a powerful, intuitive, and maintenance-free forum to Drupal without slowing it down. No database, servers, or coding required');
+        $output .= '<h3>' . t('How to Configure Website Toolbox Forum') . '</h3>';
+        $output .= '<dl>';
+        $output .= '<dt>' . t('Go to Modules >> Website Toolbox Forum >> Configure.') . '</dt>';
+        $output .= '<dt>' . t('Enter your Website Toolbox account information') . '</dt>';
+        $output .= '<dt>' . t('Select option to embedded/non-embedded forum') . '</dt>';
+        $output .= '<dd></dd>';
+        $output .= '<dd>' . t('<b>Embedded: </b> Forum will be displayed on a website page as a "forum".') . '</dd>';
+        $output .= '<dd>' . t('<b>Non-embedded: </b>Will create a menu link but will take you to the forum page(https://yourforum.discussion.community)') . '</dd>';     
+        $output .= '</dl>';
+        return $output;
+        }
+}
+/**
+ * Implements hook_node_view().
+ *
+ * Injects the auth token into the embedded forum script URL when the forum is
+ * configured as embedded. Previously this hook was declared inside an
+ * if-block guarded by an undefined variable, so it was never registered and
+ * raised a PHP warning on every page on PHP 8 (Drupal 10).
+ */
+function website_toolbox_forum_node_view(array &$build, EntityInterface $node, $display, $view_mode) {
+    if (\Drupal::config('node.settings')->get('forum_embedded_option') != 1) {
+        return;
+    }
+    $build['#cache']['contexts'][] = 'cookies:forumLogoutToken';
+    $build['#cache']['contexts'][] = 'session.exists';
+    $forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key');
+    $forumUrl     = \Drupal::config('node.settings')->get('forum_url');
+    $content      = $build['body'][0]['#text'] ?? '';
+    if($content){
+        if (preg_match('#^https?://#', \Drupal::config('node.settings')->get('forum_url'))) {
+            $forumUrl = \Drupal::config('node.settings')->get('forum_url');
+        } else {
+            $forumUrl = "http://" . \Drupal::config('node.settings')->get('forum_url');
+        }
+        $forumEmbedUrl = preg_replace('#^https?:#i', '', $forumUrl);
+        $auth_token    = '';
+        if (isset($_COOKIE['forumLogoutToken'])) {
+            $auth_token = "?authtoken=" . $_COOKIE['forumLogoutToken'];
+        } elseif (isset($_SESSION['forumLoginAuthToken'])) {
+            $auth_token = "?authtoken=" . $_SESSION['forumLoginAuthToken'];
+            $build['#cache']['contexts'][] = 'session';
+        }
+        if (isset($_COOKIE['forumLogoutToken']) && isset($_COOKIE['loginRemember'])) {
+            $auth_token .= "&remember=" . $_COOKIE['loginRemember'];
+        }
+        $embedURL                   = $forumEmbedUrl . '/js/mb/embed.js';
+        $newURL                     = $forumEmbedUrl . '/js/mb/embed.js' . $auth_token;
+        $content_changed            = str_replace($embedURL, $newURL, $content);
+        $build['body'][0]['#text']  = $content_changed;
+    }
+}
+/**
+ * Implements hook_link_alter().
+ *
+ * Alters the forum link before page render when the forum is not embedded.
+ * Previously this hook was declared inside website_toolbox_forum_node_view()
+ * and therefore only registered under conditions that could never be met.
+ */
+function website_toolbox_forum_link_alter(&$variables){
+    if (\Drupal::config('node.settings')->get('forum_embedded_option') == 1) {
+        return;
+    }
+    if (!isset($_COOKIE['forumLogoutToken'])) {
+        return;
+    }
+    // Themes like Olivero wrap menu link titles in markup (e.g. a <span>),
+    // so compare against the tag-stripped text.
+    if (trim(strip_tags((string) ($variables['text'] ?? ''))) == 'Forum'){
+        if (isset($_COOKIE['forumLogoutToken'])) {
+            $cookie = $_COOKIE['forumLogoutToken'];
+        } elseif (isset($_SESSION['forumLoginAuthToken'])) {
+            $cookie = $_SESSION['forumLoginAuthToken'];
+        }
+        $variables['options']['query']['authtoken']  = $cookie;
+    }
+}
+/**
+ * Implements hook_preprocess_menu().
+ *
+ * website_toolbox_forum_link_alter() appends the forum authtoken to the Forum
+ * menu link based on the forumLogoutToken cookie, so the rendered menu must
+ * vary by that cookie or Drupal's render cache serves a stale tokenless link.
+ */
+function website_toolbox_forum_preprocess_menu(&$variables) {
+    if (\Drupal::config('node.settings')->get('forum_embedded_option') != 1) {
+        $variables['#cache']['contexts'][] = 'cookies:forumLogoutToken';
+    }
+}
+function website_toolbox_forum_user_login($account){
+    $userId = \Drupal::currentUser()->id();
+    $email = \Drupal::currentUser()->getEmail();
+    $username = \Drupal::currentUser()->getAccountName();
+    $userData = (object) array(
+        'name' => $username,
+        'mail' => $email,
+        'externalUserid' => $userId
+    );   
+    $getAuthDetails = Drupal\website_toolbox_forum\getForumAuthtoken($userData, "login");
+    if (empty($getAuthDetails['authtoken'])) {
+        return;
+    }
+    Drupal\website_toolbox_forum\setCookieOnLogin($getAuthDetails, "");
+    Drupal\website_toolbox_forum\saveAuthToken($getAuthDetails['authtoken'], $getAuthDetails['forumUserid']);
+    // NOTE: drupal_flush_all_caches() was removed here. Called without the
+    // $kernel argument it invalidates and rebuilds the container mid-request,
+    // which replaces the session service; SessionManager::save() then treats
+    // the lazy login session as obsolete and never emits the session cookie,
+    // logging the user straight back out on Drupal 10.
+}
+
+function website_toolbox_forum_user_insert(Drupal\Core\Entity\EntityInterface $entity){
+    $roles = $entity->getRoles(TRUE);
+    $postPass = $_POST['pass'] ?? $_POST['pass1'] ?? '';
+    $username = $_POST['name'] ?? $entity->getAccountName();
+    $email    = $_POST['mail'] ?? $entity->getEmail();
+    $pass     = is_array($postPass) ? ($postPass['pass1'] ?? '') : $postPass;
+    $userId   = $entity->id();
+    $userData = (object) array(
+        'name' => $username,
+        'mail' => $email,
+        'pass' => $pass,
+        'externalUserid' => $userId
+    );        
+    $user = \Drupal\user\Entity\User::load($entity->id());
+    if(!$user->user_picture->isEmpty()){
+      $avatarUrl = \Drupal::service('file_url_generator')->generateAbsoluteString($user->user_picture->entity->getFileUri());
+    }else{
+      $avatarUrl = '';
+    }
+    $forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key') ;
+    $forumUrl     = \Drupal::config('node.settings')->get('forum_url'); 
+    $URL          = $forumUrl . "/register/create_account/";
+    $request = \Drupal::httpClient()->post($URL, ['verify' => true,'form_params' => ['apikey' => $forumsApiKey,'member' => $username,'email' => $email,'externalUserid' => $userId,"avatar" => $avatarUrl]])->getBody()->getContents(); 
+    if (!$request) {
+        $result = json_decode($request);
+        \Drupal::messenger()->addError($result->error ?? 'Unable to register the user with the Website Toolbox forum.');
+        die();
+    }else{
+      $syncOption = \Drupal::config('node.settings')->get('forum_roles_sync_option');
+      if($syncOption == 1){
+        $customUserGroups = array_keys(Drupal\website_toolbox_forum\getUserGroupIdsForRoles($roles));
+        Drupal\website_toolbox_forum\assignDivestUserGroup($email, $username, $customUserGroups);
+      }
+    }
+    // No drupal_flush_all_caches() and no drupal_static_reset() here: the new
+    // user row is already visible via entity cache tags.
+}
+function website_toolbox_forum_user_presave( Drupal\Core\Entity\EntityInterface $entity){
+    if($entity->original){
+        $user = \Drupal\user\Entity\User::load($entity->id());
+        $_SESSION['oldUserEmail'] = $user->getEmail();
+    }
+}
+function website_toolbox_forum_user_update(Drupal\Core\Entity\EntityInterface $entity){   
+    $emailToVerify  = $_SESSION['oldUserEmail'] ?? $entity->getEmail();
+    $getUserDetails     = Drupal\website_toolbox_forum\getUserDetails($emailToVerify);
+    $forumUser = $getUserDetails->{'data'}[0] ?? NULL;
+    if (!$forumUser || empty($forumUser->{'userId'})) {
+        return;
+    }
+    $userId = $forumUser->{'userId'};
+    $userName = $entity->getAccountName();
+    $externalUserid = $entity->id();
+    $user = \Drupal\user\Entity\User::load($entity->id());
+    if(!$user->user_picture->isEmpty()){
+      $avatarUrl = \Drupal::service('file_url_generator')->generateAbsoluteString($user->user_picture->entity->getFileUri());
+    }else{
+      $avatarUrl = '';
+    }
+    $email = $entity->getEmail();
+    $userDetails = array("email" => $email,
+            "avatarUrl" => $avatarUrl,
+            "username" => $userName,
+            "externalUserid" => $externalUserid,
+            "name" => $userName);
+            $url =  "/users/$userId";
+    Drupal\website_toolbox_forum\sendApiRequest('POST',$url,$userDetails); 
+    $syncOption = \Drupal::config('node.settings')->get('forum_roles_sync_option');
+    if($syncOption == 1){
+      $removeUserGroups = [];
+      $assignUserGroups = array_keys(Drupal\website_toolbox_forum\getUserGroupIdsForRoles($entity->getRoles(TRUE)));
+      if($entity->original){
+        $removedRoles = array_diff($entity->original->getRoles(TRUE), $entity->getRoles(TRUE));
+        $roleStorage  = \Drupal::entityTypeManager()->getStorage('user_role');
+        foreach ($removedRoles as $removedRole) {
+          $role      = $roleStorage->load($removedRole);
+          $roleTitle = $role ? $role->label() : $removedRole;
+          $userGroupId = Drupal\website_toolbox_forum\getUserGroupIdByRole($removedRole, $roleTitle, FALSE);
+          if($userGroupId && !in_array($userGroupId, $assignUserGroups)){
+            $removeUserGroups[] = $userGroupId;
+          }
+        }
+      }
+      Drupal\website_toolbox_forum\assignDivestUserGroup($email, $userName, $assignUserGroups, $removeUserGroups);
+    }
+}
+function website_toolbox_forum_user_delete( Drupal\Core\Entity\EntityInterface $entity){
+    $username     = $entity->getAccountName();
+    $forumsApiKey = \Drupal::config('node.settings')->get('forum_api_key');
+    $forumUrl     = \Drupal::config('node.settings')->get('forum_url'); 
+    if (empty($forumUrl)) {
+        return;
+    }
+    $URL          = $forumUrl . "/register";    
+    $request = \Drupal::httpClient()->post($URL, [
+        'verify' => true,
+        'form_params' => ['type' => 'json',
+        'apikey' => $forumsApiKey,
+        'massaction' => 'decline_mem',
+        'usernames' => $username,]               
+        ])->getBody()->getContents();        
+}
+function website_toolbox_forum_page_bottom(array &$page_bottom) { 
+    $userId = \Drupal::currentUser()->id();
+    $forumUrl = \Drupal::config('node.settings')->get('forum_url');
+    $authToken = $_COOKIE['forumLogoutToken'] ?? $_SESSION['forumLoginAuthToken'] ?? '';
+    $ssoCache = ['contexts' => ['cookies:forumLogoutToken', 'session.exists']];
+    if (!isset($_COOKIE['forumLogoutToken'])) {
+        $ssoCache['contexts'][] = 'session';
+    }
+    if ($userId == 0 && $authToken) { 
+        $logoutAuthUrl = $forumUrl . "/register/logout?authtoken=" . $authToken;
+        $logoutAuthUrl = preg_replace('#^https?:#i', '', $logoutAuthUrl);
+        $page_bottom['contentImg'] = ['#markup' => '<img src="' . $logoutAuthUrl . '" border="0" width="0" height="0" alt="">', '#cache' => $ssoCache];
+        Drupal\website_toolbox_forum\unsetLoginSession();
+        Drupal\website_toolbox_forum\resetCookieOnLogout();
+    }  
+    if ($userId != 0 && $authToken) { 
+        $loginAuthUrl = $forumUrl . "/register/dologin?authtoken=" . $authToken;
+        $loginAuthUrl = preg_replace('#^https?:#i', '', $loginAuthUrl);
+        $page_bottom['contentImg'] = ['#markup' => '<img src="' . $loginAuthUrl . '" border="0" width="0" height="0" alt="">', '#cache' => $ssoCache];
+    }   
+}
+function existingUserForumLogin(){ 
+    $userId = \Drupal::currentUser()->id();
+    $email = \Drupal::currentUser()->getEmail();
+    $username = \Drupal::currentUser()->getAccountName();
+    $userData = (object) array(
+        'name' => $username,
+        'mail' => $email,
+        'externalUserid' => $userId
+    );   
+    $getAuthDetails = Drupal\website_toolbox_forum\getForumAuthtoken($userData, "login");
+    if (empty($getAuthDetails['authtoken'])) {
+        return;
+    }
+    Drupal\website_toolbox_forum\setCookieOnLogin($getAuthDetails, "");
+    Drupal\website_toolbox_forum\saveAuthToken($getAuthDetails['authtoken'], $getAuthDetails['forumUserid']);
+}
+function website_toolbox_forum_user_role_insert(EntityInterface $entity) { 
+    $syncOption = \Drupal::config('node.settings')->get('forum_roles_sync_option');
+    if($syncOption == 1){
+      if ($entity->isSyncing()) {
+        return;
+      }
+      Drupal\website_toolbox_forum\getUserGroupIdByRole($entity->id(), $entity->label(), TRUE, $entity->label());
+    }
+}
+function website_toolbox_forum_user_role_update(EntityInterface $entity) {
+    $syncOption = \Drupal::config('node.settings')->get('forum_roles_sync_option');
+    if($syncOption == 1){
+      if ($entity->isSyncing()) {
+        return;
+      } 
+      $userGroupId = Drupal\website_toolbox_forum\getUserGroupIdByRole($entity->id(), $entity->label(), FALSE);
+      if(!$userGroupId && $entity->original){
+        $userGroupId = Drupal\website_toolbox_forum\getUserGroupIdByRole($entity->id(), $entity->original->label(), FALSE);
+      }
+      if($userGroupId){
+        Drupal\website_toolbox_forum\sendApiRequest('POST', "/usergroups/".$userGroupId, array("title"=>$entity->label(),"usertitle"=>$entity->label()));
+      }else{
+        Drupal\website_toolbox_forum\getUserGroupIdByRole($entity->id(), $entity->label(), TRUE, $entity->label());
+      }
+    }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete().
+ */
+function website_toolbox_forum_user_role_delete(EntityInterface $entity) {
+    $syncOption = \Drupal::config('node.settings')->get('forum_roles_sync_option');
+    if($syncOption == 1){
+      if ($entity->isSyncing()) {
+        return;
+      } 
+      $userGroupId = Drupal\website_toolbox_forum\getUserGroupIdByRole($entity->id(), $entity->label(), FALSE);
+      if($userGroupId){
+        Drupal\website_toolbox_forum\sendApiRequest('DELETE', "/usergroups/".$userGroupId);
+      }
+    }
+}
+?>

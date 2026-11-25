@@ -1,0 +1,37 @@
+INSTALLATION
+------------
+//For Support article
+1. Download the Website Toolbox Forum module
+        A. Go to https://www.drupal.org/project/website_toolbox_forum
+        B. Scroll to the Downloads section at the bottom of the page and download the release related to your version of Drupal.
+//For Support article
+1. Upload and Install
+		A. Lognin to administrator panel and go to Navigate to Administrator >> Modules for Drupal 7.x and Administrator >> Extend for Drupal 8.x, 9.x, 10.x & 11.x
+      	B. Click on button "Install new module" and upload downloaded module .zip/.tar folder as it is. 
+      	After this step you will find "Website Toolbox Forum" module is added to the existing modules list.
+      	C. Scroll down the page and select checkbox for "Website Tollbox Forum" and click on "Install". 
+      	 
+After successful module installtion there will be three options 
+		A. Help : Explain how to configure "Website Toolbox Forum" module.
+		B. Permissions : Set up permissions related to module accessibility. 
+		C. Configure : Module configuration settings.
+
+2. How to Configure Website Toolbox Forum 
+     Go to Modules >> Website Toolbox Forum >> Configure.
+     Enter your Website Toolbox account information
+     Select option to embedded/non-embedded forum
+         A) Embedded: Forum will be displayed on a website page as a "forum".
+         B) Non-embedded: Will create a menu link but will take you to the forum page(https://yourforum.discussion.community)
+    Choose your settings and press Save
+
+Your forum is configured now. 
+
+3. Fontend:
+		A) Frontend you will find a menu with name "Forum".
+		B) If in configuration "embedded" is selected then forum will show in same page. if "embedded" is not selected then after clicking on forum link, it will take you to forum page on https://websitetoolbox.com.
+		
+	See this page for an example screencast:
+	https://www.websitetoolbox.com/blog/drupal-forum-module-829
+
+	If you need help, you can contact Website Toolbox support to below link:
+	https://www.websitetoolbox.com/contact?subject=Drupal+plugin+help
