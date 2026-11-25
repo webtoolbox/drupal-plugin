@@ -224,40 +224,51 @@ function checkForumListed($forumUsername, $forumPassword, $forumEmbeddedOption){
         exit();
     }
 }
-/*The Forum page is stored as a node, so its content type has to exist. Drupal
- * 10's standard profile installed one; Drupal 11 ships content types as recipes
- * instead, so a fresh Drupal 11 site has none and the node would be created
- * with an unknown bundle. Create the type (with the body field and its
- * displays) only when it is missing.*/
+/*The Forum page is stored as a node, so its content type and body field have to
+ * exist. Drupal 10's standard profile installed both; Drupal 11 ships content
+ * types as recipes instead, so a fresh Drupal 11 site has neither and the node
+ * would be created against a bundle that does not exist. Create only what is
+ * missing, and record what the plugin created so the uninstall can take it away
+ * again without touching anything the site already had.*/
 function ensureForumNodeType(){
-    $nodeTypeStorage = \Drupal::entityTypeManager()->getStorage('node_type');
-    if ($nodeTypeStorage->load('page')) {
-        return;
+    $entityTypeManager = \Drupal::entityTypeManager();
+    $created = \Drupal::state()->get('website_toolbox_forum.created_config', array());
+    if (!$entityTypeManager->getStorage('node_type')->load('page')) {
+        \Drupal\node\Entity\NodeType::create(array(
+            'type' => 'page',
+            'name' => 'Basic page',
+            'description' => 'Use <em>basic pages</em> for your static content, such as an "About us" page.',
+        ))->save();
+        $created['node_type'] = TRUE;
     }
-    \Drupal\node\Entity\NodeType::create(array(
-        'type' => 'page',
-        'name' => 'Basic page',
-        'description' => 'Use <em>basic pages</em> for your static content, such as an "About us" page.',
-    ))->save();
-    \Drupal::entityTypeManager()->getStorage('field_storage_config')->create(array(
-        'field_name' => 'body',
-        'entity_type' => 'node',
-        'type' => 'text_with_summary',
-    ))->save();
-    \Drupal::entityTypeManager()->getStorage('field_config')->create(array(
-        'field_name' => 'body',
-        'entity_type' => 'node',
-        'bundle' => 'page',
-        'label' => 'Body',
-        'translatable' => TRUE,
-    ))->save();
-    $displayRepository = \Drupal::service('entity_display.repository');
-    $displayRepository->getFormDisplay('node', 'page', 'default')
-        ->setComponent('body', array('type' => 'text_textarea_with_summary'))->save();
-    $displayRepository->getViewDisplay('node', 'page', 'default')
-        ->setComponent('body', array('label' => 'hidden', 'type' => 'text_default'))->save();
-    $displayRepository->getViewDisplay('node', 'page', 'teaser')
-        ->setComponent('body', array('label' => 'hidden', 'type' => 'text_summary_or_trimmed'))->save();
+    if (!$entityTypeManager->getStorage('field_config')->load('node.page.body')) {
+        if (!$entityTypeManager->getStorage('field_storage_config')->load('node.body')) {
+            $entityTypeManager->getStorage('field_storage_config')->create(array(
+                'field_name' => 'body',
+                'entity_type' => 'node',
+                'type' => 'text_with_summary',
+            ))->save();
+            $created['body_storage'] = TRUE;
+        }
+        $entityTypeManager->getStorage('field_config')->create(array(
+            'field_name' => 'body',
+            'entity_type' => 'node',
+            'bundle' => 'page',
+            'label' => 'Body',
+            'translatable' => TRUE,
+        ))->save();
+        $displayRepository = \Drupal::service('entity_display.repository');
+        $displayRepository->getFormDisplay('node', 'page', 'default')
+            ->setComponent('body', array('type' => 'text_textarea_with_summary'))->save();
+        $displayRepository->getViewDisplay('node', 'page', 'default')
+            ->setComponent('body', array('label' => 'hidden', 'type' => 'text_default'))->save();
+        $displayRepository->getViewDisplay('node', 'page', 'teaser')
+            ->setComponent('body', array('label' => 'hidden', 'type' => 'text_summary_or_trimmed'))->save();
+        $created['body_instance'] = TRUE;
+    }
+    if ($created) {
+        \Drupal::state()->set('website_toolbox_forum.created_config', $created);
+    }
 }
 function createEmbeddedForum($response, $forumEmbeddedOption,$nids){
     ensureForumNodeType();
@@ -273,12 +284,8 @@ function createEmbeddedForum($response, $forumEmbeddedOption,$nids){
         'expanded' => TRUE,]);
     $menuLink->save();
     saveForumPathAlias("/node/" . $nodeId, "/forum");
-    drupal_static_reset();
-    // drupal_flush_all_caches() removed: without the $kernel argument it rebuilds
-    // the container mid-request, replacing the session service; SessionManager
-    // then treats the in-flight session as obsolete and destroys/never-saves it,
-    // logging the user out. Entity saves already invalidate the relevant caches
-    // via cache tags (node, menu_link_content), so a full flush is unnecessary.
+    // No drupal_flush_all_caches()/drupal_static_reset() here: the node and the
+    // menu link are already visible via entity cache tags.
 }
 /*Update forum url and login/logout url on forum server configuration*/
 function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
@@ -298,16 +305,11 @@ function updateForumData($forumUsername, $forumAPI, $embedUrl = ""){
 }
     /*create url if embedded is disabled*/
 function createForumMenuUrl($response,$nids){
-    ensureForumNodeType();
     $forumUrl = $response->forumAddress;
     $menuLink = MenuLinkContent::create(['title' => 'Forum','link' => ['uri' => $forumUrl],'menu_name' => 'main','expanded' => TRUE,]);
     $menuLink->save();     
-    drupal_static_reset();
-    // drupal_flush_all_caches() removed: without the $kernel argument it rebuilds
-    // the container mid-request, replacing the session service; SessionManager
-    // then treats the in-flight session as obsolete and destroys/never-saves it,
-    // logging the user out. Entity saves already invalidate the relevant caches
-    // via cache tags (node, menu_link_content), so a full flush is unnecessary.
+    // No drupal_flush_all_caches()/drupal_static_reset() here: the menu link is
+    // already visible via entity cache tags.
 }
 /*Save a path alias for a system path, replacing any existing alias for it.
  * Replaces the path.alias_storage service, which no longer exists in Drupal 10.*/

@@ -32,7 +32,7 @@ function getForumAuthtoken($user, $type){
         //Check if http/https request could not return any error then filter JSON from response
         if ($request) {
             $response = json_decode($request);
-             if ($response && !empty($response->authtoken)) {
+             if ($response && isset($response->authtoken) && $response->authtoken !== "") {
                 $authtoken     = $response->authtoken;
                 $forumUserid   = $response->userid ?? '';
                 $responseArray = array(
@@ -66,7 +66,7 @@ function getUserGroupsByTitle(){
     for($i=0; $i< count($groupListData);$i++){
         $groupTitle = $groupListData[$i]->{"title"} ?? '';
         if($groupTitle != ''){
-            $userGroups[strtolower($groupTitle)] = $groupListData[$i]->{"userGroupId"};
+            $userGroups[strtolower($groupTitle)] = $groupListData[$i]->{"userGroupId"} ?? '';
         }
     }
     return $userGroups;
@@ -197,7 +197,7 @@ function getDomainName($url){
         return $url;
     }
     $parsedURL = parse_url($url);
-    $domain = isset($parsedURL['host']) ? $parsedURL['host'] : $parsedURL['path'];
+    $domain = isset($parsedURL['host']) ? $parsedURL['host'] : ($parsedURL['path'] ?? '');
     if (preg_match('/(?P<domain>[a-z0-9][a-z0-9\-]{1,63}\.[a-z\.]{2,6})$/i', $domain, $regs)) {
         return $regs['domain'];
     }

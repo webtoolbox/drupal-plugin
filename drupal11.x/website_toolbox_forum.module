@@ -112,7 +112,6 @@ function website_toolbox_forum_user_login($account){
     }
     Drupal\website_toolbox_forum\setCookieOnLogin($getAuthDetails, "");
     Drupal\website_toolbox_forum\saveAuthToken($getAuthDetails['authtoken'], $getAuthDetails['forumUserid']);
-    drupal_static_reset();
     // NOTE: drupal_flush_all_caches() was removed here. Called without the
     // $kernel argument it invalidates and rebuilds the container mid-request,
     // which replaces the session service; SessionManager::save() then treats
@@ -154,11 +153,8 @@ function website_toolbox_forum_user_insert(Drupal\Core\Entity\EntityInterface $e
         Drupal\website_toolbox_forum\assignDivestUserGroup($email, $username, $customUserGroups);
       }
     }
-    drupal_static_reset();
-    // drupal_flush_all_caches() removed: it rebuilds the container mid-request
-    // (no $kernel argument), replacing the session service and destroying the
-    // in-flight session. The new user row is already visible via entity cache
-    // tags, so no full flush is needed.
+    // No drupal_flush_all_caches() and no drupal_static_reset() here: the new
+    // user row is already visible via entity cache tags.
 }
 function website_toolbox_forum_user_presave( Drupal\Core\Entity\EntityInterface $entity){
     if($entity->original){

@@ -37,6 +37,36 @@ function website_toolbox_forum_uninstall() {
 		$config->clear($key);
 	}
 	$config->save();
+	// Remove the content type, body field and displays only when this module
+	// created them: Drupal 11's standard profile ships no content type, so the
+	// sync form creates one, and it should not outlive the module.
+	$createdConfig = \Drupal::state()->get('website_toolbox_forum.created_config');
+	if ($createdConfig) {
+		$entityTypeManager = \Drupal::entityTypeManager();
+		foreach (array(array('entity_view_display', 'node.page.default'), array('entity_view_display', 'node.page.teaser'), array('entity_form_display', 'node.page.default')) as $displayInfo) {
+			$display = $entityTypeManager->getStorage($displayInfo[0])->load($displayInfo[1]);
+			if ($display) {
+				$display->delete();
+			}
+		}
+		$bodyField = $entityTypeManager->getStorage('field_config')->load('node.page.body');
+		if ($bodyField) {
+			$bodyField->delete();
+		}
+		if (!empty($createdConfig['body_storage'])) {
+			$bodyStorage = $entityTypeManager->getStorage('field_storage_config')->load('node.body');
+			if ($bodyStorage) {
+				$bodyStorage->delete();
+			}
+		}
+		if (!empty($createdConfig['node_type'])) {
+			$forumNodeType = $entityTypeManager->getStorage('node_type')->load('page');
+			if ($forumNodeType) {
+				$forumNodeType->delete();
+			}
+		}
+		\Drupal::state()->delete('website_toolbox_forum.created_config');
+	}
 	setcookie('forumLogoutToken', 0, time() - 3600, "/");
 	unset($_COOKIE['forumLogoutToken']);
 	setcookie('forumLoginUserid', '', time() - 3600, "/");

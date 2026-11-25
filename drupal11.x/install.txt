@@ -6,7 +6,7 @@ INSTALLATION
         B. Scroll to the Downloads section at the bottom of the page and download the release related to your version of Drupal.
 //For Support article
 1. Upload and Install
-		A. Lognin to administrator panel and go to Navigate to Administrator >> Modules for Drupal 7.x and Administrator >> Extend for Drupal 8.x & 9.x
+		A. Lognin to administrator panel and go to Navigate to Administrator >> Modules for Drupal 7.x and Administrator >> Extend for Drupal 8.x, 9.x, 10.x & 11.x
       	B. Click on button "Install new module" and upload downloaded module .zip/.tar folder as it is. 
       	After this step you will find "Website Toolbox Forum" module is added to the existing modules list.
       	C. Scroll down the page and select checkbox for "Website Tollbox Forum" and click on "Install". 
