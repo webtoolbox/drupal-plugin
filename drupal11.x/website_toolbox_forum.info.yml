@@ -1,0 +1,6 @@
+name: 'Website Toolbox Forum'
+type: module
+description: 'Cloud-based Forum Module. <br />Your Drupal forum doesn’t need to be basic. Website Toolbox is a cloud-based forum module that allows <br />you to easily add a powerful, intuitive, and maintenance-free forum to Drupal without slowing it down. No database, servers, or coding required.'
+package: Custom
+core_version_requirement: ^11
+configure: website_toolbox_forum.sync
